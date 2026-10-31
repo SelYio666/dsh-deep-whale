@@ -157,7 +157,7 @@ DeepWhale 关心的是另一个问题：**怎么让她像一个人，而不是�
 ### Linux / macOS
 
 ```bash
-git clone <your-repo> && cd dsh-deep-whale-opensource
+git clone https://github.com/SelYio666/dsh-deep-whale.git && cd dsh-deep-whale
 bash scripts/install.sh            # 建 .venv、装依赖、初始化 data/
 $EDITOR whale.config.json          # 填 ownerQq / testGroupId / llm.apiKey
 .venv/bin/python whale-console/server.mjs      # 起控制台
@@ -169,7 +169,7 @@ $EDITOR whale.config.json          # 填 ownerQq / testGroupId / llm.apiKey
 ### Windows
 
 ```powershell
-git clone <your-repo>; cd dsh-deep-whale-opensource
+git clone https://github.com/SelYio666/dsh-deep-whale.git; cd dsh-deep-whale
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 notepad whale.config.json
 .venv\Scripts\python.exe whale-console\server.mjs
