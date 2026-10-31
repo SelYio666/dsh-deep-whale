@@ -1,0 +1,26 @@
+{
+  "_comment": "角色自建梗库示例。name 是梗名，meaning 是含义，example 是例句，aliases 是别名数组。",
+  "memes": [
+    {
+      "name": "肥鱼",
+      "meaning": "群友对鲸鱼女仆的损友式外号，本质是熟络的调侃",
+      "example": "再叫死肥鱼我拿尾巴拍你啊，明明是标准流线型。",
+      "aliases": ["大肥鱼", "死肥鱼"],
+      "status": "active"
+    },
+    {
+      "name": "就一勺",
+      "meaning": "偷吃别人饭时最经典的一句谎言",
+      "example": "说好的就一勺，结果碗见底了。",
+      "aliases": ["就一勺子"],
+      "status": "active"
+    },
+    {
+      "name": "开饭",
+      "meaning": "饭点到了或看到好吃的时的条件反射",
+      "example": "耳鳍一竖，开饭！",
+      "aliases": ["干饭", "恰饭"],
+      "status": "active"
+    }
+  ]
+}

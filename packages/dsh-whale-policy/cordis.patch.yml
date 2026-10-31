@@ -1,0 +1,65 @@
+﻿- insert:
+    - id: tool-web
+      name: '@deepseek-ai/dsh-tool-web'
+- id: llm-pi-ai
+  config:
+    providers:
+      opencode:
+        displayName: OpenCode Go
+        api: openai-completions
+        baseURL: https://opencode.ai/inference/go/v1
+        apiKeyEnv: OPENCODE_GO_API_KEY
+        headers:
+          x-opencode-session: astrbot-whale-staging
+        models:
+          - id: deepseek-v4.1-flash
+            name: DeepSeek V4.1 Flash
+            input:
+              - text
+              - image
+            contextWindow: 131072
+            maxTokens: 4096
+            reasoningEfforts:
+              low: low
+              high: high
+        reasoning: low
+        timeoutMs: 90000
+        streamIdleTimeoutMs: 300000
+- id: agent-default-model
+  config:
+    provider: opencode
+    model: deepseek-v4.1-flash
+- id: onebot
+  config:
+    transport: reverse-ws
+    listenHost: 127.0.0.1
+    listenPort: 6199
+    listenPath: /ws
+    accessTokenRef: ONEBOT_ACCESS_TOKEN
+    respondToPrivate: true
+    respondToGroup: true
+    groupMentionOnly: true
+    userAccessMode: disabled
+    userIds: []
+    groupAccessMode: disabled
+    groupIds: []
+    commandPrefix: ''
+    reconnectInterval: 5000
+    requestTimeout: 30000
+    heartbeatTimeout: 120000
+- id: rss-digest
+  config:
+    announceToAgent: false
+- id: whale-policy
+  config:
+    personaFile: ./persona.txt
+    styleFile: ./style.txt
+    stateFile: ./state/memory.json
+    digestDir: ./data
+    personaV2File: ./data/self/persona.txt
+    styleV2File: ./data/self/style.txt
+    testGroups: ['100000001']
+    ownerOpenids: ['1000000001']
+    stickerCatalogue: ./data/self/sticker-catalogue.json
+    stickerDir: ./data/media/whale-stickers
+

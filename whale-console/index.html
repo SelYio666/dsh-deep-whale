@@ -1,0 +1,2380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DEEP WHALE · NEURAL RING 神经星环总控台</title>
+  <style>
+    :root {
+      --bg-sidebar: #f8fafc;
+      --sidebar-text: #1e293b;
+      --sidebar-muted: #64748b;
+      --sidebar-active-bg: #e0f2fe;
+      --sidebar-active-fg: #0284c7;
+      --ops-bg: #05070b;
+      --ops-panel: rgba(10, 15, 24, 0.86);
+      --ops-border: rgba(56, 189, 248, 0.16);
+      --ops-border-subtle: rgba(148, 163, 184, 0.12);
+      --text-main: #e2e8f0;
+      --text-dim: #64748b;
+      --cyan: #38bdf8;
+      --teal: #2dd4bf;
+      --amber: #f59e0b;
+      --purple: #a855f7;
+      --emerald: #22c55e;
+      --rose: #ec4899;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "JetBrains Mono", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", monospace, sans-serif;
+      background: #05070b;
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      user-select: none;
+    }
+    /* Left Sidebar (AstrBot style light/dark switchable, default clean studio style) */
+    .sidebar {
+      width: 215px;
+      background: #0b0f17;
+      border-right: 1px solid rgba(56, 189, 248, 0.15);
+      display: flex;
+      flex-direction: column;
+      padding: 14px 10px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+    .sidebar.light-nav {
+      background: #ffffff;
+      color: #1e293b;
+      border-right: 1px solid #e2e8f0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px 16px;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+      color: #38bdf8;
+    }
+    .sidebar.light-nav .brand { color: #0f172a; }
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 15px;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+    }
+    .nav-group-title {
+      font-size: 11px;
+      color: #64748b;
+      padding: 12px 12px 6px;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      margin-bottom: 3px;
+    }
+    .sidebar.light-nav .nav-item { color: #334155; }
+    .nav-item:hover {
+      background: rgba(56, 189, 248, 0.09);
+      color: #38bdf8;
+    }
+    .nav-item.active {
+      background: rgba(56, 189, 248, 0.16);
+      color: #38bdf8;
+      font-weight: 700;
+      box-shadow: inset 3px 0 0 #38bdf8;
+    }
+    .sidebar.light-nav .nav-item.active {
+      background: #e0f2fe;
+      color: #0284c7;
+      box-shadow: inset 3px 0 0 #0284c7;
+    }
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 10px 12px 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    /* Main Viewport */
+    .viewport {
+      flex: 1;
+      height: 100vh;
+      background: radial-gradient(circle at 52% 46%, #0b1528 0%, #05070b 65%, #020306 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .tab-page {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .tab-page.active {
+      display: flex;
+    }
+
+    /* === TAB 1: NEURAL RING (1:1 Replica + Enhanced) === */
+    .nr-top-bar {
+      height: 54px;
+      padding: 10px 22px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .nr-eyebrow {
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    .nr-signal-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      max-width: 560px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+    }
+    .nr-badge {
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .nr-controls {
+      display: flex;
+      gap: 6px;
+    }
+    .nr-btn {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      color: #cbd5e1;
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .nr-btn:hover, .nr-btn.active {
+      border-color: #38bdf8;
+      color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    }
+
+    .nr-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 315px 1fr 340px;
+      gap: 12px;
+      padding: 4px 22px 8px;
+      min-height: 0;
+      position: relative;
+    }
+    /* Left Column: Title + 12 Clusters */
+    .nr-left {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      z-index: 10;
+    }
+    .nr-giant-title {
+      font-size: 32px;
+      font-weight: 300;
+      letter-spacing: 4px;
+      line-height: 1.05;
+      color: #f8fafc;
+      text-shadow: 0 0 24px rgba(56, 189, 248, 0.35);
+      margin-bottom: 6px;
+    }
+    .nr-giant-title span {
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: #94a3b8;
+      font-weight: 400;
+      margin-left: 6px;
+    }
+    .nr-sub-meta {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    .nr-live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 9px;
+      border-radius: 99px;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+      font-size: 11px;
+      width: fit-content;
+      margin-bottom: 10px;
+    }
+    .nr-live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+      animation: pulseDot 1.6s infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+    .nr-clusters-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #64748b;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+      letter-spacing: 0.8px;
+    }
+    .nr-clusters-list {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .nr-clusters-list::-webkit-scrollbar { width: 4px; }
+    .nr-clusters-list::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 4px; }
+    .cluster-row {
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cluster-row:hover, .cluster-row.selected {
+      background: rgba(30, 41, 59, 0.78);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .cluster-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+    .cluster-code {
+      font-weight: 700;
+      letter-spacing: 0.6px;
+    }
+    .cluster-cn {
+      color: #94a3b8;
+      font-size: 10.5px;
+      margin-left: 6px;
+    }
+    .cluster-cnt {
+      font-weight: 700;
+      color: #f1f5f9;
+      font-size: 11px;
+    }
+    .cluster-bar-bg {
+      height: 3px;
+      background: rgba(51, 65, 85, 0.55);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+    .cluster-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+    .cluster-sub {
+      font-size: 9.5px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Center Ring Canvas */
+    .nr-center {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+    #neuralCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    #neuralCanvas:active { cursor: grabbing; }
+    .node-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(7, 11, 19, 0.94);
+      border: 1px solid #38bdf8;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      color: #f1f5f9;
+      max-width: 320px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75), 0 0 15px rgba(56, 189, 248, 0.25);
+      display: none;
+      z-index: 30;
+      line-height: 1.45;
+    }
+
+    /* Right Column: Synaptic Activity Matrix + Signal Feed + Crawler */
+    .nr-right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+      z-index: 10;
+    }
+    .nr-box {
+      background: rgba(10, 14, 23, 0.82);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .nr-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+      color: #94a3b8;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      padding-bottom: 4px;
+    }
+    .syn-grid-row {
+      display: grid;
+      grid-template-columns: 68px 1fr;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 3px;
+    }
+    .syn-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .syn-cells {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 2px;
+    }
+    .syn-cell {
+      height: 10px;
+      border-radius: 1.5px;
+      background: rgba(30, 41, 59, 0.65);
+      transition: background 0.3s;
+    }
+    .signal-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 11px;
+      max-height: 220px;
+    }
+    .signal-item {
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+      line-height: 1.35;
+      padding: 3px 4px;
+      border-radius: 4px;
+      background: rgba(15, 23, 42, 0.45);
+      cursor: pointer;
+    }
+    .signal-item:hover { background: rgba(56, 189, 248, 0.12); }
+    .sig-time { color: #64748b; font-size: 10px; flex-shrink: 0; }
+    .sig-tag { font-weight: 700; font-size: 10px; flex-shrink: 0; }
+    .sig-text { color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .crawler-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin: 4px 0 8px;
+    }
+    .cw-num { font-size: 16px; font-weight: 700; color: #f8fafc; }
+    .cw-lbl { font-size: 9.5px; color: #64748b; }
+
+    /* Bottom Telemetry Bar */
+    .nr-bottom-bar {
+      height: 70px;
+      margin: 0 22px 12px;
+      background: rgba(9, 13, 22, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 6px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      padding: 8px 16px;
+      gap: 14px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .tele-col {
+      border-right: 1px solid rgba(148, 163, 184, 0.1);
+      padding-right: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .tele-col:last-child { border-right: none; }
+    .tele-head { font-size: 9.5px; color: #64748b; letter-spacing: 0.8px; }
+    .tele-val { font-size: 20px; font-weight: 700; color: #f8fafc; }
+    .tele-val small { font-size: 11px; color: #94a3b8; font-weight: 400; margin-left: 4px; }
+    .tele-foot { font-size: 9.5px; color: #64748b; }
+
+    /* Cluster Drawer Modal (Inspect & Edit Memory inside Neural Ring) */
+    .drawer {
+      position: absolute;
+      top: 56px;
+      right: 22px;
+      bottom: 90px;
+      width: 460px;
+      background: rgba(8, 13, 24, 0.97);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 8px;
+      box-shadow: -12px 0 40px rgba(0, 0, 0, 0.85);
+      z-index: 40;
+      display: none;
+      flex-direction: column;
+      padding: 16px;
+    }
+    .drawer.open { display: flex; }
+
+    /* === Generic Inner Pages (Companion, Sticker, Economy, Persona, Sentinel) === */
+    .page-wrap {
+      padding: 22px 28px;
+      overflow-y: auto;
+      height: 100%;
+    }
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .page-desc {
+      font-size: 12.5px;
+      color: #94a3b8;
+      margin-bottom: 18px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: rgba(13, 19, 32, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .input, .textarea, .select {
+      width: 100%;
+      background: rgba(7, 11, 19, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      color: #f1f5f9;
+      border-radius: 6px;
+      padding: 8px 11px;
+      font-size: 12.5px;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    .textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      border: none;
+      padding: 7px 15px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary:hover { filter: brightness(1.12); }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 4px 9px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .sticker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+      gap: 10px;
+    }
+    .sticker-card {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .sticker-card:hover {
+      transform: translateY(-2px);
+      border-color: #38bdf8;
+    }
+    .sticker-card img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      margin-bottom: 4px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0284c7;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+      display: none;
+      z-index: 100;
+    }
+
+    /* ============ MOBILE RESPONSIVE (竖屏手机 / 窄屏) ============ */
+    @media (max-width: 1024px) {
+      body { flex-direction: column; height: 100%; overflow: auto; }
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 6px 8px;
+        gap: 4px;
+        border-right: none;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .brand { padding: 0 8px 0 2px; font-size: 14px; width: 100%; }
+      .nav-group-title { display: none; }
+      .nav-item {
+        padding: 6px 9px;
+        font-size: 11.5px;
+        margin-bottom: 0;
+        flex: 0 0 auto;
+        border: 1px solid rgba(56, 189, 248, 0.2);
+      }
+      .nav-item.active { box-shadow: none; border-color: #38bdf8; }
+      .sidebar-footer { margin-top: 0; padding: 0 6px; border-top: none; }
+
+      .viewport { height: auto; min-height: calc(100vh - 96px); overflow: visible; }
+      .nr-body {
+        grid-template-columns: 1fr;
+        padding: 4px 10px 8px;
+        gap: 10px;
+      }
+      .nr-center { min-height: 360px; order: -1; }
+      .nr-giant-title { font-size: 24px; letter-spacing: 2px; }
+      .nr-clusters-list { max-height: 300px; }
+      .nr-right { gap: 8px; }
+      .nr-bottom-bar {
+        grid-template-columns: repeat(2, 1fr);
+        height: auto;
+        margin: 0 10px 12px;
+        padding: 10px;
+        gap: 10px;
+      }
+      .tele-col { border-right: none; border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding-bottom: 6px; }
+      .nr-top-bar { flex-direction: column; height: auto; gap: 8px; padding: 8px 12px 0; }
+      .nr-signal-banner { max-width: 100%; font-size: 11px; }
+      .nr-controls { flex-wrap: wrap; }
+      .drawer { top: 8px; right: 8px; left: 8px; bottom: 8px; width: auto; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .page-wrap { padding: 14px; }
+      .page-title { font-size: 17px; }
+      #brain3dCanvas { min-height: 320px; }
+    }
+    @media (max-width: 640px) {
+      .nr-giant-title { font-size: 20px; }
+      .nr-btn { padding: 4px 7px; font-size: 10.5px; }
+      .sticker-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+      .sticker-card img { width: 56px; height: 56px; }
+      #quickSearch { width: 100% !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Left Navigation Sidebar -->
+  <aside class="sidebar light-nav" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">🐋</div>
+      <span>DeepWhale</span>
+    </div>
+
+    <div class="nav-group-title">系统与总览</div>
+    <div class="nav-item" onclick="switchTab('sentinel', this)">🛰️ 双机哨兵状态</div>
+    <div class="nav-item" onclick="switchTab('economy', this)">🍪 深海饼干与股市</div>
+    <div class="nav-item" onclick="switchTab('logs', this)">📜 数据与实时日志</div>
+
+    <div class="nav-group-title">扩展与拟人中枢</div>
+    <div class="nav-item" onclick="switchTab('persona', this)">💖 人格与梗库设定</div>
+    <div class="nav-item" onclick="switchTab('prospect', this)">⏰ 未来任务与提醒</div>
+    <div class="nav-item" onclick="switchTab('companion', this)">👑 老大专属陪伴舱</div>
+    <div class="nav-item" onclick="switchTab('stickers', this)">🖼️ 表情包与图卡管理</div>
+    <div class="nav-item" onclick="switchTab('brain3d', this)">🧠 3D记忆大脑 & 生活层</div>
+    <div class="nav-item active" onclick="switchTab('ring', this)">🧩 记忆星环</div>
+
+    <div class="sidebar-footer">
+      <span>v2.1 · NeuralOps</span>
+      <button class="nr-btn" onclick="toggleNavTheme()" title="切换侧栏明暗">🌓</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="viewport">
+    <!-- ==================== TAB 1: NEURAL RING ==================== -->
+    <section class="tab-page active" id="tab-ring">
+      <div class="nr-top-bar">
+        <div class="nr-eyebrow">AGENT OPS · THEME 03 · SYNAPTIC DISPATCH · DEEPSEEK WHALE MAID</div>
+        <div class="nr-signal-banner" id="topSignalBanner">
+          <span class="nr-badge" id="topSigCluster">EPISODIC</span>
+          <span style="color:#94a3b8;font-size:11px;">召回</span>
+          <span id="topSigText">「正在连接深海鲸鱼女仆突触记忆核心…」</span>
+        </div>
+        <div class="nr-controls">
+          <input id="quickSearch" class="input" style="width:140px;margin:0;padding:3px 8px;font-size:11px;" placeholder="🔍 检索记忆/QQ..." oninput="filterRingSearch(this.value)" />
+          <button class="nr-btn active" id="btnViewOrbit" onclick="setRingMode('orbit')">视角: 环绕</button>
+          <button class="nr-btn" id="btnViewFlat" onclick="setRingMode('flat')">平面</button>
+          <button class="nr-btn" onclick="triggerPulseWave()">⚡ 脉冲激发</button>
+          <button class="nr-btn" onclick="toggleFullScreen()">全屏</button>
+        </div>
+      </div>
+
+      <div class="nr-body">
+        <!-- Left 12 Clusters -->
+        <div class="nr-left">
+          <div class="nr-giant-title">NEURAL<br/>RING<span>神经星环</span></div>
+          <div class="nr-sub-meta">
+            记忆库 · 12 类神经团 · 召回即突触脉冲<br/>
+            真实数据 · <span style="color:#cbd5e1;">state/memory.json</span> · 更新 <span id="lblUpdateTime">--:--:--</span>
+          </div>
+          <div class="nr-live-pill">
+            <span class="nr-live-dot"></span>
+            <span>真实记忆库 · 实时同步 (<span id="lblTotalEntries">0</span> 条)</span>
+          </div>
+          <div class="nr-clusters-head">
+            <span>NEURON CLUSTERS 神经团 <b style="color:#e2e8f0;">12 团 + 1 保持</b></span>
+            <span id="lblClusterMeta">0 条记忆 · 0 条关联</span>
+          </div>
+          <div class="nr-clusters-list" id="clustersList"></div>
+        </div>
+
+        <!-- Center Interactive Canvas -->
+        <div class="nr-center">
+          <canvas id="neuralCanvas"></canvas>
+          <div class="node-tooltip" id="nodeTooltip"></div>
+        </div>
+
+        <!-- Right Synaptic Matrix & Signal Feed -->
+        <div class="nr-right">
+          <div class="nr-box">
+            <div class="nr-box-header">
+              <span>SYNAPTIC ACTIVITY <small style="color:#64748b;">神经活动</small></span>
+              <span>近 30s · 每格 2.5s</span>
+            </div>
+            <div id="synapticMatrix"></div>
+          </div>
+
+          <div class="nr-box" style="flex:1;min-height:0;">
+            <div class="nr-box-header">
+              <span>SIGNAL FEED <small style="color:#64748b;">突触日志</small></span>
+              <span id="lblFeedStats">0 recalls · 0 links</span>
+            </div>
+            <div class="signal-list" id="signalFeedList"></div>
+          </div>
+
+          <div class="nr-box">
+            <div class="nr-box-header">
+              <span>CRAWLER <small style="color:#64748b;">潜意识巡检蛛</small></span>
+              <span style="color:#38bdf8;">副机每30m提炼</span>
+            </div>
+            <div class="crawler-stats">
+              <div><div class="cw-lbl">巡检群数</div><div class="cw-num" style="color:#38bdf8;">2</div></div>
+              <div><div class="cw-lbl">读文档</div><div class="cw-num" id="cwDocs">0</div></div>
+              <div><div class="cw-lbl">冲突BUG</div><div class="cw-num" style="color:#22c55e;">0</div></div>
+              <div><div class="cw-lbl">谐音梗索引</div><div class="cw-num" style="color:#eab308;">2751</div></div>
+            </div>
+            <div style="height:4px;background:rgba(56,189,248,0.18);border-radius:2px;overflow:hidden;margin-bottom:5px;">
+              <div style="width:78%;height:100%;background:linear-gradient(90deg,#38bdf8,#2dd4bf);"></div>
+            </div>
+            <div style="font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="cwCurrent">
+              正在看 EPISODIC 情景 · 「老大专属全服记忆互通已开启」
+            </div>
+          </div>
+        </div>
+
+        <!-- Drawer for inspecting/editing a specific cluster -->
+        <div class="drawer" id="clusterDrawer">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid rgba(148,163,184,0.2);padding-bottom:8px;">
+            <div>
+              <span id="drawerTitle" style="font-size:15px;font-weight:700;color:#38bdf8;">CLUSTER</span>
+              <span id="drawerSub" style="font-size:11px;color:#94a3b8;margin-left:6px;"></span>
+            </div>
+            <button class="nr-btn" onclick="closeClusterDrawer()">✕ 关闭</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;">
+            <input id="newMemInput" class="input" style="margin:0;flex:1;" placeholder="新增一条记忆（默认写入老大全局FACT）..." />
+            <button class="btn-primary" onclick="addMemoryFromDrawer()">+ 写入</button>
+          </div>
+          <div id="drawerItems" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px;"></div>
+        </div>
+      </div>
+
+      <!-- Bottom 6-Column Telemetry -->
+      <div class="nr-bottom-bar">
+        <div class="tele-col">
+          <div class="tele-head">TOPOLOGY 拓扑</div>
+          <div class="tele-val"><span id="teleLinks">0</span><small>关联</small></div>
+          <div class="tele-foot" id="teleTopoSub">0 条目 · 12 类 · 0 边</div>
+        </div>
+        <div class="tele-col">
+          <div class="tele-head">SIGNAL RATE 脉冲</div>
+          <div class="tele-val" style="display:flex;align-items:center;gap:10px;">
+            <span>4.2<small>次/分</small></span>
+            <svg width="70" height="22" viewBox="0 0 70 22"><polyline fill="none" stroke="#38bdf8" stroke-width="1.5" points="0,16 8,14 14,6 20,18 27,9 34,15 41,4 48,17 55,11 62,8 70,14"/></svg>
+          </div>
+          <div class="tele-foot">召回 · 关联扩展 · 情绪镜像</div>
+        </div>
+        <div class="tele-col">
+          <div class="tele-head">DELIVERED TODAY 今日交付</div>
+          <div class="tele-val" id="teleRecalls">42</div>
+          <div class="tele-foot">老大免@唤醒 · 严格认人开启</div>
+        </div>
+        <div class="tele-col">
+          <div class="tele-head">PROOF 审校通过</div>
+          <div class="tele-val" style="color:#4ade80;">98%</div>
+          <div class="tele-foot">旁人/本人物理隔离已生效</div>
+        </div>
+        <div class="tele-col">
+          <div class="tele-head">MEM BYTES 状态库容量</div>
+          <div class="tele-val"><span id="teleEntries">0</span><small>条</small></div>
+          <div class="tele-foot">老大全局记忆上限 30 条</div>
+        </div>
+        <div class="tele-col">
+          <div class="tele-head">RENDER 渲染</div>
+          <div class="tele-val"><span id="teleFps">60</span><small>fps</small></div>
+          <div class="tele-foot">环绕 · DPR <span id="teleDpr">1.0</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: COMPANION & OWNER ==================== -->
+    <section class="tab-page" id="tab-companion">
+      <div class="page-wrap">
+        <div class="page-title">👑 老大专属陪伴舱 & 深海值班室 (QQ: 见 whale.config.json)</div>
+        <div class="page-desc">在网页值班室直接摸呆毛/喂曲奇会实时改变她在 QQ 群里的心情与台词；右侧可查阅她昨晚写给你的《深海交换日记 & 怪梦》。</div>
+
+        <!-- NEW: Live Room + Secret Exchange Diary Row -->
+        <div class="grid-2">
+          <div class="card" style="background:radial-gradient(circle at 20% 50%, rgba(14,116,144,0.28) 0%, rgba(13,19,32,0.95) 75%);border-color:rgba(56,189,248,0.4);">
+            <div class="card-title">
+              <span>🏠 深海值班室 · 跨次元撸鲸鱼互动台</span>
+              <span style="font-size:11px;color:#38bdf8;">点击互动 → 30分钟内同步影响QQ群对话</span>
+            </div>
+            <div style="display:flex;gap:16px;align-items:center;margin-bottom:14px;">
+              <div style="width:92px;height:92px;border-radius:14px;background:rgba(7,11,19,0.85);border:1.5px solid rgba(56,189,248,0.5);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 20px rgba(56,189,248,0.25);">
+                <img id="roomWhaleGif" src="" style="width:80px;height:80px;object-fit:contain;" />
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;" id="roomActionStatus">当前状态：正在深海值班台前晃着尾鳍等老大</div>
+                <div style="background:rgba(15,23,42,0.9);border:1px solid rgba(56,189,248,0.35);border-radius:10px;padding:10px 12px;font-size:13px;color:#f8fafc;line-height:1.45;" id="roomSpeechBubble">
+                  「老大来后台看我啦！快摸摸我的呆毛或者赏块热曲奇～」
+                </div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+              <button class="nr-btn" style="padding:8px;font-size:12px;" onclick="interactRoom('pet')">👋 摸摸呆毛</button>
+              <button class="nr-btn" style="padding:8px;font-size:12px;" onclick="interactRoom('feed')">🍪 塞块热曲奇</button>
+              <button class="nr-btn" style="padding:8px;font-size:12px;" onclick="interactRoom('lamp')">🏮 调暖小夜灯</button>
+              <button class="nr-btn" style="padding:8px;font-size:12px;" onclick="interactRoom('tail')">🐋 捏捏尾巴尖</button>
+            </div>
+          </div>
+
+          <div class="card" style="border-color:rgba(168,85,247,0.4);">
+            <div class="card-title">
+              <span>📔 小鲸鱼的《深海交换日记 & 昨夜怪梦》</span>
+              <button class="btn-primary" style="padding:4px 10px;font-size:11px;" onclick="generateNewDiary()">🌙 立即生成今日日记与梦境</button>
+            </div>
+            <div id="diaryCardBox" style="font-size:12.5px;line-height:1.55;color:#e2e8f0;display:flex;flex-direction:column;gap:8px;">
+              <div>正在读取深海交换手账...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NEW ROW: 1. Pilulier Flavor Pill Box + 3. 5-Axis Heart-Tide Drives -->
+        <div class="grid-2">
+          <div class="card" style="border-color:rgba(236,72,153,0.45);">
+            <div class="card-title">
+              <span>💊 深海风味糖果盒 (Pilulier 临时性格胶囊 · 用完即焚)</span>
+              <span id="lblActivePill" style="font-size:11px;color:#f472b6;">当前状态：原味正常鲸鱼</span>
+            </div>
+            <div style="font-size:11.5px;color:#94a3b8;margin-bottom:10px;">
+              挑一颗糖果喂给鲸鱼（或在 QQ 里对她说「吃糖 粘人/毒舌/微醺/高冷/吃醋」），只改变接下来 4~5 回合的性格表现，回合耗尽自动恢复，绝不污染底层人设！
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+              <button class="nr-btn" style="padding:8px;font-size:12px;border-color:rgba(244,114,182,0.4);" onclick="feedPillWeb('clingy')">🍬 粘人跳跳糖 (5轮)</button>
+              <button class="nr-btn" style="padding:8px;font-size:12px;border-color:rgba(239,68,68,0.4);" onclick="feedPillWeb('spicy')">🌶️ 毒舌小辣椒 (5轮)</button>
+              <button class="nr-btn" style="padding:8px;font-size:12px;border-color:rgba(168,85,247,0.4);" onclick="feedPillWeb('tipsy')">🍶 微醺果酒冻 (4轮)</button>
+              <button class="nr-btn" style="padding:8px;font-size:12px;border-color:rgba(56,189,248,0.4);" onclick="feedPillWeb('cool')">🕶️ 高冷护法墨镜 (5轮)</button>
+              <button class="nr-btn" style="padding:8px;font-size:12px;border-color:rgba(234,179,8,0.4);" onclick="feedPillWeb('jealous')">🍋 吃醋柠檬糖 (4轮)</button>
+              <button class="nr-btn" style="padding:8px;font-size:12px;" onclick="feedPillWeb('clear')">🥤 喂清水解药 (恢复)</button>
+            </div>
+          </div>
+
+          <div class="card" style="border-color:rgba(45,212,191,0.45);">
+            <div class="card-title">
+              <span>🌊 五轴心潮驱力引擎 (Jiwen 积温 · 思念与傲娇阈值)</span>
+              <button class="btn-primary" style="padding:3px 9px;font-size:11px;" onclick="triggerMaxMissTest()">🔥 一键拉满思念与委屈 (测试重逢)</button>
+            </div>
+            <div id="drivesBarsBox" style="display:flex;flex-direction:column;gap:8px;font-size:12px;"></div>
+          </div>
+        </div>
+
+        <!-- NEW ROW: Bionics Brain Lab (1. Hypothalamus Neuro-Hormones + 2. DMN Inner Monologue Mind-Reader + 3. Amygdala Core Memory Orbs) -->
+        <div class="grid-2">
+          <div class="card" style="border-color:rgba(56,189,248,0.45);">
+            <div class="card-title">
+              <span>🧪 下丘脑 · 四维神经递质化学仪 (Neuro-Hormones)</span>
+              <span style="font-size:11px;color:#38bdf8;">见到老大自动飙升催产素</span>
+            </div>
+            <div id="neuroTubesBox" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:6px 0;"></div>
+          </div>
+
+          <div class="card" style="border-color:rgba(244,114,182,0.5);">
+            <div class="card-title">
+              <span>💭 默认模式网络 · 老大专属「读心术」监听台 (Inner OS)</span>
+              <span style="font-size:11px;color:#f472b6;">群里嘴硬 · 这里看她真实心声</span>
+            </div>
+            <div id="monologueList" style="display:flex;flex-direction:column;gap:8px;max-height:190px;overflow-y:auto;padding-right:4px;"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;border-color:rgba(253,224,71,0.45);background:radial-gradient(circle at 80% 20%, rgba(234,179,8,0.12) 0%, rgba(13,19,32,0.95) 70%);">
+          <div class="card-title">
+            <span>🌟 杏仁核 ·《头脑特工队》核心记忆水晶球陈列架 (Core Memory Orbs · 永不衰减)</span>
+            <div style="display:flex;gap:6px;">
+              <input id="newOrbTitle" class="input" style="width:150px;margin:0;padding:4px 8px;font-size:11.5px;" placeholder="水晶球标题..." />
+              <input id="newOrbText" class="input" style="width:260px;margin:0;padding:4px 8px;font-size:11.5px;" placeholder="写下与老大的高光纪念时刻..." />
+              <button class="btn-primary" style="padding:4px 10px;font-size:11.5px;" onclick="addCoreOrbWeb()">✨ 凝结新水晶球</button>
+            </div>
+          </div>
+          <div id="coreOrbsShelf" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;"></div>
+        </div>
+
+        <!-- NEW: 1v1 Solo Web Direct Chat (No QQ required) -->
+        <div class="card" style="margin-bottom:16px;border-color:rgba(45,212,191,0.5);background:radial-gradient(circle at 85% 12%, rgba(45,212,191,0.10) 0%, rgba(13,19,32,0.96) 68%);">
+          <div class="card-title">
+            <span>💬 深海随身对讲机 · 免 QQ 网页直聊 (1v1 个人独享模式)</span>
+            <span style="font-size:11px;color:#2dd4bf;">不登 QQ 也能直接跟她聊 · 走同一套记忆与人设</span>
+          </div>
+          <div id="soloChatBox" style="height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding:10px;background:rgba(5,9,16,0.72);border:1px solid rgba(45,212,191,0.22);border-radius:10px;margin-bottom:10px;">
+            <div style="align-self:flex-start;max-width:78%;background:rgba(15,23,42,0.92);border:1px solid rgba(45,212,191,0.35);border-radius:12px 12px 12px 3px;padding:9px 13px;font-size:13px;line-height:1.5;color:#e2e8f0;">
+              「老大来啦～这里是只有我们两个人的深海值班室，想说什么都可以直接在这儿跟本鲸讲哦。」
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input id="soloChatInput" class="input" style="margin:0;flex:1;" placeholder="在这个框里直接打字跟她说话（回车发送）..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendSoloChat();}" />
+            <button class="btn-primary" onclick="sendSoloChat()">发送</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">
+              <span>📡 网页遥控鲸鱼发消息 / 戳一戳</span>
+              <span style="font-size:11px;color:#4ade80;">实时直连 OneBot</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <select id="rcTargetType" class="select" style="width:130px;margin:0;">
+                <option value="group">发往群聊</option>
+                <option value="private">发往私聊</option>
+              </select>
+              <input id="rcTargetId" class="input" style="margin:0;flex:1;" value="TEST_GROUP_CFG" placeholder="群号或QQ号（默认测试群 TEST_GROUP_CFG）" />
+            </div>
+            <textarea id="rcMessage" class="textarea" style="min-height:80px;" placeholder="输入你想让鲸鱼女仆在群里或私聊说的话..."></textarea>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-primary" onclick="remoteSendMsg()">🚀 立即让鲸鱼发送</button>
+              <button class="nr-btn" onclick="remotePokeOwner()">🐾 让鲸鱼戳一下老大</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span>🐋 鲸鱼女仆实时状态调节器</span>
+              <span style="font-size:11px;color:#94a3b8;">影响回复软糯度与表情频率</span>
+            </div>
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+                <span>当前心情值 (Mood)</span>
+                <span id="lblMoodVal" style="color:#38bdf8;font-weight:700;">+0.65 (很高兴)</span>
+              </div>
+              <input type="range" id="rngMood" min="-1" max="1" step="0.05" value="0.65" style="width:100%;" oninput="document.getElementById('lblMoodVal').innerText=this.value" />
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+                <span>当前精力值 (Energy)</span>
+                <span id="lblEnergyVal" style="color:#22c55e;font-weight:700;">0.85 (精神满满)</span>
+              </div>
+              <input type="range" id="rngEnergy" min="0.1" max="1" step="0.05" value="0.85" style="width:100%;" oninput="document.getElementById('lblEnergyVal').innerText=this.value" />
+            </div>
+            <button class="btn-primary" onclick="saveWhaleMood()">💾 同步心情与精力到所有会话</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">
+              <span>📒 老大全服互通记忆本 (owner:global:notes · 上限30条)</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+              <input id="ownerNoteInput" class="input" style="margin:0;flex:1;" placeholder="例如：老大最爱喝冰美式 / 称呼我：阿怨..." />
+              <button class="btn-primary" onclick="addOwnerGlobalNote()">+ 添加专属记忆</button>
+            </div>
+            <div id="ownerNotesList" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span>🕵️‍♀️ 群友背后念叨老大 · 告状小本本 (Gossips)</span>
+              <span style="font-size:11px;color:#f59e0b;">自动监听群内 @老大 / 提老大</span>
+            </div>
+            <div id="gossipsList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;font-size:12.5px;color:#cbd5e1;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: PROSPECT (REMINDERS) ==================== -->
+    <section class="tab-page" id="tab-prospect">
+      <div class="page-wrap">
+        <div class="page-title">⏰ 未来任务与深海定时提醒 (PROSPECT)</div>
+        <div class="page-desc">在这里设定的提醒保存在服务器 owner-tools.json 中，即使关掉电脑，到点后鲸鱼也会主动发 QQ 私聊喊你。</div>
+        <div class="card" style="max-width:720px;">
+          <div class="card-title"><span>➕ 新增定时私聊提醒</span></div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;">
+            <input id="remMinutes" type="number" class="input" style="width:140px;margin:0;" value="30" placeholder="几分钟后" />
+            <input id="remTask" class="input" style="margin:0;flex:1;" placeholder="提醒事项，如：去收衣服 / 休息喝口水..." />
+            <button class="btn-primary" onclick="addReminderWeb()">添加闹钟</button>
+          </div>
+          <div id="remindersList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: PERSONA & LORE ==================== -->
+    <section class="tab-page" id="tab-persona">
+      <div class="page-wrap">
+        <div class="page-title">💖 人格设定与风格护栏 (v2.1 全量生效中)</div>
+        <div class="page-desc">直接在线修改主机的 persona_v2.txt 与 style_v2.txt，保存后可选择立即重启生效。</div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span>persona_v2.txt (核心人设)</span></div>
+            <textarea id="txtPersonaV2" class="textarea" style="min-height:420px;font-size:12px;"></textarea>
+          </div>
+          <div class="card">
+            <div class="card-title"><span>style_v2.txt (输出风格与去人机护栏)</span></div>
+            <textarea id="txtStyleV2" class="textarea" style="min-height:420px;font-size:12px;"></textarea>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="savePersonaFiles(true)">💾 保存人设并平滑重启 dsh-web</button>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: STICKERS & CARDS ==================== -->
+    <section class="tab-page" id="tab-stickers">
+      <div class="page-wrap">
+        <div class="page-title">🖼️ 表情包管理面板 & 生成图卡画廊</div>
+        <div class="page-desc">预览群内最新渲染的 SSR/UR 闪卡、关系图、词云，以及本地 139 张鲸鱼 GIF 表情库（点击表情可一键发往测试群）。</div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title"><span>🎴 近期群内生成的图卡画廊 (SSR/UR闪卡 · 关系网 · 词云 · 晚报)</span></div>
+          <div class="sticker-grid" id="cardsGallery"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>🐋 本地鲸鱼 GIF 表情包库 (点击任意表情直接发到群 TEST_GROUP_CFG)</span></div>
+          <div class="sticker-grid" id="stickersGallery"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 6: ECONOMY ==================== -->
+    <section class="tab-page" id="tab-economy">
+      <div class="page-wrap">
+        <div class="page-title">🍪 深海饼干铺 & 股市金库管理</div>
+        <div class="page-desc">查看各群饼干富豪榜，或直接用上帝权限给老大/群友空投海盐小饼干。</div>
+        <div class="card">
+          <div class="card-title">
+            <span>🏆 全服饼干账本与快速空投</span>
+            <button class="btn-primary" onclick="adjustCookie(TEST_GROUP_CFG, OWNER_QQ_CFG, 100,'★老大')">🎁 给老大空投 +100 块皇家饼干</button>
+          </div>
+          <div id="economyTable" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 7: SENTINEL & LOGS ==================== -->
+    <section class="tab-page" id="tab-sentinel">
+      <div class="page-wrap">
+        <div class="page-title">🛰️ 双机哨兵状态与系统运维</div>
+        <div class="page-desc">主机 127.0.0.1 与副机 local 运行状态监控，内置 SnowLuma QQ 虚拟屏幕实时抓图与手机扫码急救台。</div>
+        <div class="grid-3" id="serviceCards"></div>
+
+        <div class="card" style="margin-bottom:16px;border-color:rgba(56,189,248,0.4);">
+          <div class="card-title">
+            <span>🖥️ SnowLuma QQ 虚拟桌面 (:99) 实时快照 & 掉线扫码急救台</span>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-primary" onclick="captureSnowluma('capture')">📸 抓取当前 QQ 窗口画面</button>
+              <button class="nr-btn" onclick="captureSnowluma('qr_flow')">🔑 自动点掉下线弹窗并切出扫码二维码</button>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
+            当你在外没带电脑且发现 6199 断连时，点上方按钮即可在手机浏览器里直接查看主机虚拟屏幕并扫码重登 QQ。
+          </div>
+          <div id="snowlumaScreenBox" style="text-align:center;display:none;">
+            <img id="snowlumaImg" src="" style="max-width:100%;max-height:420px;border-radius:8px;border:1px solid rgba(56,189,248,0.45);" />
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>📜 主机 dsh-web.service 实时日志</span>
+            <div style="display:flex;gap:8px;">
+              <button class="nr-btn" onclick="loadDashboard()">🔄 刷新状态</button>
+              <button class="btn-danger" onclick="restartDshWeb()">⚡ 重启 dsh-web</button>
+            </div>
+          </div>
+          <pre id="preLogs" style="background:#030509;padding:12px;border-radius:6px;font-size:11.5px;color:#94a3b8;overflow-x:auto;max-height:380px;line-height:1.45;"></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-page" id="tab-logs">
+      <div class="page-wrap">
+        <div class="page-title">📜 原始记忆库与审计日志</div>
+        <div class="page-desc">实时查看各神经团召回明细与系统日志。</div>
+        <div class="card">
+          <pre id="preRawLogs" style="background:#030509;padding:12px;border-radius:6px;font-size:11.5px;color:#38bdf8;overflow:auto;max-height:520px;"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 8: 3D MEMORY BRAIN & LIFE LOOP (peterpoal134/memory-brain) ==================== -->
+    <section class="tab-page" id="tab-brain3d">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(56,189,248,0.16);background:rgba(8,12,22,0.92);">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="font-size:16px;font-weight:700;color:#bff8ff;letter-spacing:1.5px;text-shadow:0 0 12px rgba(0,229,255,0.45);">🧠 3D 记忆大脑 · MEMORY-BRAIN</span>
+          <span id="b3dStats" style="font-size:11.5px;color:#94a3b8;">加载 SQLite brain.db 中...</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="nr-btn" onclick="loadBrain3D()">🔄 重载星云</button>
+          <button class="nr-btn" onclick="runBrainAction('/api/brain/health','GET','记忆体检')">🩺 体检</button>
+          <button class="nr-btn" onclick="runBrainAction('/api/brain/maintenance/run','POST','睡觉整理与相似合并')">🌙 睡觉整理</button>
+          <button class="nr-btn" onclick="runBrainAction('/api/brain/digest/reflect','POST','提炼今日三件事元记忆')">✨ 反思</button>
+          <button class="nr-btn" onclick="runBrainAction('/api/brain/eval/run','POST','40条中文检索评估集')">📊 跑评估</button>
+          <button class="nr-btn" onclick="runLifeStep('book')">📖 让鲸鱼看书</button>
+          <button class="nr-btn" onclick="runLifeStep('nap')">💤 让鲸鱼午睡</button>
+          <button class="nr-btn" onclick="runLifeStep('reflect')">💭 让鲸鱼发呆</button>
+        </div>
+      </div>
+      <div style="flex:1;display:grid;grid-template-columns:1fr 330px;min-height:0;position:relative;">
+        <div style="position:relative;overflow:hidden;background:radial-gradient(circle at 50% 55%, rgba(16,36,68,0.45) 0%, #04070d 72%);">
+          <canvas id="brain3dCanvas" style="width:100%;height:100%;display:block;cursor:grab;"></canvas>
+          <!-- Top-Left Legend -->
+          <div style="position:absolute;left:16px;top:14px;display:flex;gap:12px;font-size:11px;color:#94a3b8;pointer-events:none;">
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#eafcff;box-shadow:0 0 8px #eafcff;margin-right:4px;"></i>核心</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00e5ff;box-shadow:0 0 8px #00e5ff;margin-right:4px;"></i>人物</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#39ff8f;box-shadow:0 0 8px #39ff8f;margin-right:4px;"></i>地点</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffb020;box-shadow:0 0 8px #ffb020;margin-right:4px;"></i>物件</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#b967ff;box-shadow:0 0 8px #b967ff;margin-right:4px;"></i>话题</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3d81;box-shadow:0 0 8px #ff3d81;margin-right:4px;"></i>技能</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffd166;box-shadow:0 0 8px #ffd166;margin-right:4px;"></i>记忆星点</span>
+          </div>
+          <!-- Top-Right Floating Cute Whale Maid Avatar Widget (Replica of Douyin Video #1) -->
+          <div style="position:absolute;right:20px;top:18px;display:flex;flex-direction:column;align-items:center;pointer-events:none;">
+            <div style="width:74px;height:74px;border-radius:50%;border:2px solid rgba(56,189,248,0.65);box-shadow:0 0 24px rgba(56,189,248,0.45);overflow:hidden;background:rgba(10,18,32,0.85);display:flex;align-items:center;justify-content:center;animation:floatWhale 3.2s ease-in-out infinite;">
+              <img id="whaleFloatingAvatar" src="" style="width:66px;height:66px;object-fit:contain;" />
+            </div>
+            <span style="margin-top:5px;font-size:10.5px;color:#bff8ff;background:rgba(8,15,28,0.85);padding:2px 8px;border-radius:99px;border:1px solid rgba(56,189,248,0.3);">🐋 鲸鱼识海在线</span>
+          </div>
+          <style>
+            @keyframes floatWhale {
+              0%, 100% { transform: translateY(0px); }
+              50% { transform: translateY(-6px); }
+            }
+          </style>
+          <div style="position:absolute;left:16px;bottom:12px;font-size:11px;color:#64748b;pointer-events:none;">
+            鼠标拖拽 360° 旋转 · 滚轮缩放 · 悬停查看记忆原子与实体关系 · SQLite FTS5 五路混合检索
+          </div>
+          <div id="b3dTip" class="node-tooltip"></div>
+        </div>
+        <!-- Right Sidebar for Brain Health, Recall Test & Life Loop -->
+        <div style="background:rgba(10,15,25,0.95);border-left:1px solid rgba(56,189,248,0.16);padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;">
+          <div class="nr-box">
+            <div class="nr-box-header"><span>🔍 五路混合召回实测 (BM25+图谱+重要度+时间)</span></div>
+            <div style="display:flex;gap:6px;">
+              <input id="b3dQuery" class="input" style="margin:0;flex:1;" placeholder="输入问题测试召回，如：老大 / 饼干..." />
+              <button class="btn-primary" onclick="testBrainRecall()">召回</button>
+            </div>
+            <div id="b3dRecallOut" style="margin-top:8px;font-size:11.5px;color:#cbd5e1;line-height:1.45;max-height:160px;overflow-y:auto;"></div>
+          </div>
+
+          <div class="nr-box">
+            <div class="nr-box-header"><span>🌱 鲸鱼生活层状态 (Life Loop)</span></div>
+            <div id="b3dLifeBox" style="font-size:11.5px;color:#94a3b8;line-height:1.5;">正在读取生活层...</div>
+          </div>
+
+          <div class="nr-box" style="flex:1;min-height:0;">
+            <div class="nr-box-header"><span>🩺 记忆体检 / 评估 / 维护回执</span></div>
+            <pre id="b3dReport" style="flex:1;overflow:auto;font-size:11px;color:#4ade80;white-space:pre-wrap;line-height:1.45;background:#04070d;padding:8px;border-radius:6px;"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">操作成功</div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    let ACCESS_KEY = urlParams.get('key') || localStorage.getItem('whale_ops_key') || '';
+    localStorage.setItem('whale_ops_key', ACCESS_KEY);
+    const API_BASE = window.location.pathname.includes('/whale-ops') ? '/whale-ops' : '';
+
+    let OWNER_QQ_CFG = '';
+    let TEST_GROUP_CFG = '';
+    (async function loadRuntimeConfig() {
+      try {
+        const r = await apiFetch('/api/config');
+        if (r?.ok) {
+          OWNER_QQ_CFG = String(r.ownerQq || '');
+          TEST_GROUP_CFG = String(r.testGroup || '');
+        }
+      } catch {}
+    })();
+
+    let DASH_DATA = null;
+    let SELECTED_CLUSTER = null;
+    let RING_MODE = 'orbit';
+    let SEARCH_FILTER = '';
+    let ACTIVE_PULSES = [];
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2600);
+    }
+
+    async function apiFetch(path, opts = {}) {
+      const sep = path.includes('?') ? '&' : '?';
+      const url = `${API_BASE}${path}${sep}key=${encodeURIComponent(ACCESS_KEY)}`;
+      const res = await fetch(url, {
+        ...opts,
+        headers: { 'content-type': 'application/json', 'x-whale-key': ACCESS_KEY, ...(opts.headers || {}) },
+      });
+      if (res.status === 401) {
+        const k = prompt('请输入深海鲸鱼总控台访问密钥：', ACCESS_KEY);
+        if (k) {
+          ACCESS_KEY = k.trim();
+          localStorage.setItem('whale_ops_key', ACCESS_KEY);
+          return apiFetch(path, opts);
+        }
+      }
+      return res.json();
+    }
+
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.nav-item').forEach((n) => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+      document.querySelectorAll('.tab-page').forEach((p) => p.classList.remove('active'));
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+      if (tabId === 'brain3d') {
+        loadBrain3D();
+      }
+    }
+
+    function toggleNavTheme() {
+      document.getElementById('sidebar').classList.toggle('light-nav');
+    }
+
+    function setRingMode(mode) {
+      RING_MODE = mode;
+      document.getElementById('btnViewOrbit').classList.toggle('active', mode === 'orbit');
+      document.getElementById('btnViewFlat').classList.toggle('active', mode === 'flat');
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen().catch(() => {});
+    }
+
+    function filterRingSearch(val) {
+      SEARCH_FILTER = String(val || '').trim().toLowerCase();
+    }
+
+    async function loadDashboard() {
+      const data = await apiFetch('/api/dashboard');
+      if (!data?.ok) return;
+      DASH_DATA = data;
+      renderNeuralRingUI(data.ring);
+      renderCompanionUI(data.ring, data.sys);
+      renderStickerAndEconomyUI(data.ring, data.sys);
+      renderSentinelUI(data.sys, data.ring);
+    }
+
+    function renderNeuralRingUI(ring) {
+      document.getElementById('lblUpdateTime').innerText = ring.updatedAt;
+      document.getElementById('lblTotalEntries').innerText = ring.totalEntries;
+      document.getElementById('lblClusterMeta').innerText = `${ring.totalEntries} 条记忆 · ${ring.totalLinks} 条关联`;
+      document.getElementById('teleLinks').innerText = ring.totalLinks;
+      document.getElementById('teleTopoSub').innerText = `${ring.totalEntries} 条目 · 12 类 · ${ring.totalLinks} 边`;
+      document.getElementById('teleRecalls').innerText = ring.totalRecalls;
+      document.getElementById('teleEntries').innerText = ring.totalEntries;
+      document.getElementById('cwDocs').innerText = ring.totalEntries;
+      document.getElementById('lblFeedStats').innerText = `${ring.pulses.length} recalls · ${ring.totalLinks} links`;
+      document.getElementById('teleDpr').innerText = (window.devicePixelRatio || 1).toFixed(2);
+
+      // Top banner
+      if (ring.pulses.length > 0) {
+        const latest = ring.pulses[0];
+        document.getElementById('topSigCluster').innerText = latest.cluster;
+        document.getElementById('topSigText').innerText = `「${latest.snippet}」 ← ${latest.name} (${latest.scope})`;
+        document.getElementById('cwCurrent').innerText = `正在看 ${latest.cluster} · 「${latest.snippet}」`;
+      }
+
+      // Left 12 clusters
+      const listEl = document.getElementById('clustersList');
+      const cList = Object.values(ring.clusters);
+      const maxCount = Math.max(10, ...cList.map((c) => c.items.length));
+      listEl.innerHTML = cList.map((c) => {
+        const pct = Math.min(100, Math.max(8, Math.round((c.items.length / maxCount) * 100)));
+        const sel = SELECTED_CLUSTER === c.id ? 'selected' : '';
+        return `
+          <div class="cluster-row ${sel}" onclick="openClusterDrawer('${c.id}')">
+            <div class="cluster-top">
+              <div>
+                <span class="cluster-code" style="color:${c.color}">${c.name}</span>
+                <span class="cluster-cn">${c.cn}</span>
+              </div>
+              <span class="cluster-cnt">${c.items.length}</span>
+            </div>
+            <div class="cluster-bar-bg">
+              <div class="cluster-bar-fill" style="width:${pct}%;background:${c.color};box-shadow:0 0 8px ${c.color};"></div>
+            </div>
+            <div class="cluster-sub">
+              <span>${c.hits}次命中 · 点击管理明细</span>
+              <span>权重 ${(0.65 + (c.items.length % 30) * 0.01).toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Right Synaptic Matrix (8 rows x 12 cols)
+      const matEl = document.getElementById('synapticMatrix');
+      const matRows = cList.slice(0, 9);
+      matEl.innerHTML = matRows.map((c, rIdx) => {
+        const cells = [];
+        for (let col = 0; col < 12; col += 1) {
+          const seed = (c.items.length * 7 + rIdx * 13 + col * 5 + Math.floor(Date.now() / 2500)) % 10;
+          const alpha = seed > 6 ? 0.88 : seed > 3 ? 0.42 : 0.12;
+          cells.push(`<div class="syn-cell" style="background:${c.color};opacity:${alpha.toFixed(2)};"></div>`);
+        }
+        return `
+          <div class="syn-grid-row">
+            <span class="syn-label" style="color:${c.color}">${c.name}</span>
+            <div class="syn-cells">${cells.join('')}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Signal feed list
+      const sigEl = document.getElementById('signalFeedList');
+      sigEl.innerHTML = ring.pulses.map((p) => {
+        const col = ring.clusters[p.cluster]?.color || '#38bdf8';
+        return `
+          <div class="signal-item" onclick="openClusterDrawer('${p.cluster}')">
+            <span class="sig-time">${p.time}</span>
+            <span class="sig-tag" style="color:${col}">${p.cluster} 召回</span>
+            <span class="sig-text">「${p.snippet}」 ← ${p.name}</span>
+          </div>
+        `;
+      }).join('');
+
+      if (SELECTED_CLUSTER) renderDrawerContent(SELECTED_CLUSTER);
+    }
+
+    function openClusterDrawer(cid) {
+      SELECTED_CLUSTER = cid;
+      document.getElementById('clusterDrawer').classList.add('open');
+      renderDrawerContent(cid);
+      triggerPulseWave(cid);
+    }
+
+    function closeClusterDrawer() {
+      SELECTED_CLUSTER = null;
+      document.getElementById('clusterDrawer').classList.remove('open');
+    }
+
+    function renderDrawerContent(cid) {
+      const c = DASH_DATA?.ring?.clusters?.[cid];
+      if (!c) return;
+      document.getElementById('drawerTitle').innerText = `${c.name}`;
+      document.getElementById('drawerTitle').style.color = c.color;
+      document.getElementById('drawerSub').innerText = `${c.cn} (${c.items.length} 条)`;
+      const box = document.getElementById('drawerItems');
+      box.innerHTML = c.items.map((it) => `
+        <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(148,163,184,0.18);border-radius:6px;padding:8px 10px;font-size:12px;">
+          <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:10.5px;margin-bottom:4px;">
+            <span>👤 ${it.owner} · <b style="color:${c.color}">${it.scope}</b></span>
+            ${it.editable && it.key ? `<button class="btn-danger" onclick="deleteMemoryItem('${it.key}', ${typeof it.index === 'number' ? it.index : -1})">删除</button>` : ''}
+          </div>
+          <div style="color:#f1f5f9;line-height:1.45;">${it.text}</div>
+        </div>
+      `).join('');
+    }
+
+    async function addMemoryFromDrawer() {
+      const inp = document.getElementById('newMemInput');
+      const txt = inp.value.trim();
+      if (!txt) return;
+      await apiFetch('/api/memory/save', {
+        method: 'POST',
+        body: JSON.stringify({ key: 'owner:global:notes', text: txt }),
+      });
+      inp.value = '';
+      showToast('已写入神经星环记忆库！');
+      await loadDashboard();
+    }
+
+    async function deleteMemoryItem(key, index) {
+      await apiFetch('/api/memory/delete', {
+        method: 'POST',
+        body: JSON.stringify({ key, index: index >= 0 ? index : undefined }),
+      });
+      showToast('已删除该条记忆节点');
+      await loadDashboard();
+    }
+
+    function renderCompanionUI(ring, sys) {
+      const roomImg = document.getElementById('roomWhaleGif');
+      const rs = ring.roomState;
+      if (roomImg) {
+        const gifName = rs?.gif || '12N11.gif';
+        roomImg.src = `${API_BASE}/media/${gifName}?key=${encodeURIComponent(ACCESS_KEY)}`;
+      }
+      if (rs && rs.action) {
+        document.getElementById('roomActionStatus').innerText = `最近互动：${rs.action}`;
+        document.getElementById('roomSpeechBubble').innerText = `「${rs.reply}」`;
+      }
+
+      const dBox = document.getElementById('diaryCardBox');
+      const ld = ring.latestDiary;
+      if (dBox) {
+        if (ld && ld.diary) {
+          dBox.innerHTML = `
+            <div style="background:rgba(15,23,42,0.8);padding:8px 10px;border-radius:6px;border-left:3px solid #a855f7;">
+              <div style="font-size:11px;color:#c084fc;font-weight:700;">💌 写给老大的私密手账 (${ld.date || '今日'})</div>
+              <div style="margin-top:3px;">${ld.diary}</div>
+            </div>
+            <div style="background:rgba(15,23,42,0.8);padding:8px 10px;border-radius:6px;border-left:3px solid #38bdf8;">
+              <div style="font-size:11px;color:#38bdf8;font-weight:700;">🫧 昨夜深海怪梦</div>
+              <div style="margin-top:3px;">${ld.dream}</div>
+            </div>
+            <div style="background:rgba(15,23,42,0.8);padding:8px 10px;border-radius:6px;border-left:3px solid #eab308;">
+              <div style="font-size:11px;color:#fde047;font-weight:700;">👑 老大深层认知画像</div>
+              <div style="margin-top:3px;">${ld.owner_profile}</div>
+            </div>
+          `;
+        } else {
+          dBox.innerHTML = '<div style="color:#64748b;">点击右上角「🌙 立即生成今日日记与梦境」即可唤醒潜意识写日记～</div>';
+        }
+      }
+
+      const ownerItems = ring.clusters.FACT.items.filter((i) => i.key === 'owner:global:notes');
+      const pillEl = document.getElementById('lblActivePill');
+      if (pillEl) {
+        const ap = ring.activePill;
+        pillEl.innerText = ap && ap.turnsLeft > 0 ? `生效中：${ap.name} (剩 ${ap.turnsLeft} 轮)` : '当前状态：原味正常鲸鱼';
+      }
+      const drvBox = document.getElementById('drivesBarsBox');
+      if (drvBox) {
+        const d = ring.drives || { miss: 32, tsundere: 55, playful: 60, grievance: 12, share: 48 };
+        const axes = [
+          { label: '💗 思念值 (Miss · 久别随时间累积)', val: d.miss || 25, col: '#ec4899' },
+          { label: '哼 嘴硬值 (Tsundere · 群聊傲娇护盾)', val: d.tsundere || 55, col: '#f59e0b' },
+          { label: '🎮 玩心值 (Playful · 水群整活兴致)', val: d.playful || 50, col: '#38bdf8' },
+          { label: '🥺 委屈度 (Grievance · 被叫肥鱼蓄水池)', val: d.grievance || 10, col: '#a855f7' },
+          { label: '🫧 分享欲 (Share · 读完热榜/日记想找老大)', val: d.share || 40, col: '#2dd4bf' },
+        ];
+        drvBox.innerHTML = axes.map((a) => `
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px;">
+              <span>${a.label}</span>
+              <b style="color:${a.col}">${a.val}%</b>
+            </div>
+            <div style="height:6px;background:rgba(30,41,59,0.75);border-radius:3px;overflow:hidden;">
+              <div style="width:${Math.min(100, Math.max(4, a.val))}%;height:100%;background:${a.col};box-shadow:0 0 8px ${a.col};"></div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Render 4 Neuro-Hormone Tubes
+      const neuroBox = document.getElementById('neuroTubesBox');
+      if (neuroBox) {
+        const nr = ring.neuro || { dopamine: 64, oxytocin: 92, norepinephrine: 18, serotonin: 80 };
+        const tubes = [
+          { name: '⚡ 多巴胺', sub: '兴奋/整活奖赏', val: nr.dopamine, col: '#38bdf8' },
+          { name: '💗 催产素', sub: '对老大依恋度', val: nr.oxytocin, col: '#f472b6' },
+          { name: '🔥 肾上腺素', sub: '炸毛/护食警觉', val: nr.norepinephrine, col: '#ef4444' },
+          { name: '🌿 血清素', sub: '深海治愈稳定', val: nr.serotonin, col: '#4ade80' },
+        ];
+        neuroBox.innerHTML = tubes.map((t) => `
+          <div style="background:rgba(7,11,19,0.85);border:1px solid rgba(148,163,184,0.16);border-radius:8px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:18px;font-weight:800;color:${t.col};text-shadow:0 0 10px ${t.col};margin-bottom:6px;">${t.val}%</div>
+            <div style="width:22px;height:78px;background:rgba(30,41,59,0.75);border-radius:99px;padding:2px;display:flex;align-items:flex-end;overflow:hidden;border:1px solid rgba(148,163,184,0.25);">
+              <div style="width:100%;height:${Math.min(100, Math.max(8, t.val))}%;background:linear-gradient(180deg, ${t.col}, rgba(15,23,42,0.9));border-radius:99px;box-shadow:0 0 12px ${t.col};transition:height 0.5s;"></div>
+            </div>
+            <div style="font-size:11.5px;font-weight:700;color:#f1f5f9;margin-top:8px;">${t.name}</div>
+            <div style="font-size:9.5px;color:#64748b;text-align:center;">${t.sub}</div>
+          </div>
+        `).join('');
+      }
+
+      // Render DMN Inner Monologue Mind-Reader
+      const monoBox = document.getElementById('monologueList');
+      if (monoBox) {
+        const monos = ring.monologues || [];
+        monoBox.innerHTML = monos.map((m) => `
+          <div style="background:rgba(15,23,42,0.82);border:1px solid ${m.isOwner ? 'rgba(244,114,182,0.45)' : 'rgba(148,163,184,0.18)'};border-radius:8px;padding:8px 10px;font-size:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#94a3b8;margin-bottom:3px;">
+              <span><b style="color:${m.isOwner ? '#f472b6' : '#38bdf8'}">[${m.tag}]</b> 对话人：${m.name}</span>
+              <span>${m.time}</span>
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:4px;">🗣️ 嘴上回：「${m.mouthSaid}」</div>
+            <div style="color:#fde047;line-height:1.45;font-weight:500;">💭 真实心声：${m.innerOs}</div>
+          </div>
+        `).join('');
+      }
+
+      // Render Amygdala Core Memory Orbs
+      const orbsBox = document.getElementById('coreOrbsShelf');
+      if (orbsBox) {
+        const orbs = ring.coreOrbs || [];
+        orbsBox.innerHTML = orbs.map((o) => `
+          <div style="background:rgba(10,15,26,0.9);border:1px solid ${o.color};border-radius:10px;padding:12px;display:flex;gap:12px;align-items:center;box-shadow:0 0 18px ${o.color}22;">
+            <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 32% 30%, #ffffff, ${o.color} 55%, #090d16 95%);box-shadow:0 0 20px ${o.color};"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:${o.color};font-weight:700;margin-bottom:2px;">
+                <span>${o.emotion}</span>
+                <span>${o.date || ''}</span>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#f8fafc;margin-bottom:3px;">${o.title}</div>
+              <div style="font-size:11.5px;color:#cbd5e1;line-height:1.4;">${o.text}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+      document.getElementById('ownerNotesList').innerHTML = ownerItems.length
+        ? ownerItems.map((it) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(15,23,42,0.7);padding:7px 10px;border-radius:6px;font-size:12.5px;">
+            <span>★ ${it.text}</span>
+            <button class="btn-danger" onclick="deleteMemoryItem('owner:global:notes', ${it.index})">删除</button>
+          </div>
+        `).join('')
+        : '<div style="color:#64748b;font-size:12px;">暂无全局记忆，可在上方输入框直接添加（所有群与私聊自动共享）</div>';
+
+      const gossips = ring.ownerStore?.gossips || [];
+      document.getElementById('gossipsList').innerHTML = gossips.length
+        ? gossips.slice().reverse().map((g) => `
+          <div style="background:rgba(15,23,42,0.7);padding:8px 10px;border-radius:6px;border-left:3px solid #f59e0b;">
+            <div style="font-size:11px;color:#94a3b8;">群 ${g.groupId} · <b>${g.name}</b> (${g.userId})</div>
+            <div style="margin-top:3px;color:#f8fafc;">「${g.text}」</div>
+          </div>
+        `).join('')
+        : '<div style="color:#64748b;">今天群里还没人敢在背后偷偷 @ 或念叨老大～</div>';
+
+      const rems = ring.ownerStore?.reminders || [];
+      document.getElementById('remindersList').innerHTML = rems.length
+        ? rems.map((r) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(15,23,42,0.75);padding:9px 12px;border-radius:6px;">
+            <span>⏰ <b>[${r.label}]</b> ${r.task} <small style="color:#64748b;">(ID: ${r.id})</small></span>
+            <button class="btn-danger" onclick="deleteReminderWeb('${r.id}')">删除</button>
+          </div>
+        `).join('')
+        : '<div style="color:#64748b;font-size:12.5px;">当前暂无待触发的提醒闹钟。</div>';
+
+      const pEl = document.getElementById('txtPersonaV2');
+      const sEl = document.getElementById('txtStyleV2');
+      if (!pEl.value && sys.personaV2) pEl.value = sys.personaV2;
+      if (!sEl.value && sys.styleV2) sEl.value = sys.styleV2;
+    }
+
+    function renderStickerAndEconomyUI(ring, sys) {
+      const cGal = document.getElementById('cardsGallery');
+      cGal.innerHTML = (sys.generatedCards || []).map((c) => `
+        <div class="sticker-card" onclick="window.open('${API_BASE}/media/${c.name}?key=${ACCESS_KEY}','_blank')">
+          <img src="${API_BASE}/media/${c.name}?key=${ACCESS_KEY}" loading="lazy" />
+          <div style="font-size:10px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</div>
+        </div>
+      `).join('') || '<div style="color:#64748b;font-size:12px;">暂无近期生成图卡</div>';
+
+      const sGal = document.getElementById('stickersGallery');
+      sGal.innerHTML = (sys.stickers || []).slice(0, 48).map((s) => `
+        <div class="sticker-card" onclick="sendStickerToGroup('${s.code}', '${s.name}')">
+          <img src="${API_BASE}/media/${s.code}.gif?key=${ACCESS_KEY}" loading="lazy" />
+          <div style="font-size:11px;color:#e2e8f0;font-weight:600;">${s.name}</div>
+          <div style="font-size:9.5px;color:#64748b;">${s.emotion || s.code}</div>
+        </div>
+      `).join('');
+
+      const ecoEl = document.getElementById('economyTable');
+      ecoEl.innerHTML = (ring.cookies || []).slice(0, 20).map((u, idx) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(15,23,42,0.75);padding:8px 12px;border-radius:6px;border-left:3px solid ${u.isOwner ? '#eab308' : '#38bdf8'};">
+          <div>
+            <span style="font-weight:700;color:${u.isOwner ? '#fde047' : '#f1f5f9'};">#${idx + 1} ${u.isOwner ? '👑 ' : ''}${u.name}</span>
+            <span style="font-size:11px;color:#64748b;margin-left:8px;">QQ: ${u.qq} · 群: ${u.groupId}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12.5px;color:#38bdf8;font-weight:700;">🍪 ${u.count} 块 <small style="color:#94a3b8;">(投喂 ${u.fed})</small></span>
+            <button class="nr-btn" onclick="adjustCookie('${u.groupId}','${u.qq}',10,'${u.name}')">+10</button>
+            <button class="nr-btn" onclick="adjustCookie('${u.groupId}','${u.qq}',-5,'${u.name}')">-5</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderSentinelUI(sys, ring) {
+      const sc = document.getElementById('serviceCards');
+      const items = [
+        { title: 'DSH Web 主引擎', val: sys.mainServices?.dshWeb || 'active', sub: '127.0.0.1:31810' },
+        { title: 'OneBot 6199 逆向桥', val: sys.ws6199 ? 'ESTAB 已连接' : '重连中', sub: 'SnowLuma QQ 个人号协议' },
+        { title: '副机哨兵 local', val: 'ACTIVE 巡检中', sub: 'Watchdog 2m · 异地热备 1h' },
+      ];
+      sc.innerHTML = items.map((it) => `
+        <div class="card">
+          <div style="font-size:12px;color:#94a3b8;">${it.title}</div>
+          <div style="font-size:20px;font-weight:700;color:#4ade80;margin:6px 0;">● ${it.val}</div>
+          <div style="font-size:11px;color:#64748b;">${it.sub}</div>
+        </div>
+      `).join('');
+      document.getElementById('preLogs').innerText = sys.dshLogs || '';
+      document.getElementById('preRawLogs').innerText = JSON.stringify(ring.pulses, null, 2);
+    }
+
+    async function addOwnerGlobalNote() {
+      const inp = document.getElementById('ownerNoteInput');
+      const txt = inp.value.trim();
+      if (!txt) return;
+      await apiFetch('/api/memory/save', { method: 'POST', body: JSON.stringify({ key: 'owner:global:notes', text: txt }) });
+      inp.value = '';
+      showToast('已记入老大全服专属记忆本！');
+      await loadDashboard();
+    }
+
+    async function interactRoom(type) {
+      const r = await apiFetch('/api/room/interact', { method: 'POST', body: JSON.stringify({ type }) });
+      if (r?.ok && r.state) {
+        document.getElementById('roomActionStatus').innerText = `刚刚互动：${r.state.action}`;
+        document.getElementById('roomSpeechBubble').innerText = `「${r.state.reply}」`;
+        document.getElementById('roomWhaleGif').src = `${API_BASE}/media/${r.state.gif}?key=${encodeURIComponent(ACCESS_KEY)}`;
+        showToast('互动成功！接下来30分钟她在QQ群里也会带着这份好心情说话～');
+      }
+    }
+
+    async function generateNewDiary() {
+      showToast('正在唤醒深海潜意识撰写今日手账日记与怪梦（约需6秒）...');
+      const r = await apiFetch('/api/diary/generate', { method: 'POST', body: '{}' });
+      if (r?.ok) {
+        showToast('今日《深海交换日记 & 昨夜怪梦》已生成并写入记忆大脑！');
+        await loadDashboard();
+      } else {
+        showToast('生成状态：' + (r?.error || '已完成'));
+      }
+    }
+
+    async function feedPillWeb(id) {
+      const r = await apiFetch('/api/pill/feed', { method: 'POST', body: JSON.stringify({ id }) });
+      if (r?.ok) {
+        showToast(r.pill ? `已喂下 ${r.pill.name}（持续 ${r.pill.turnsLeft} 回合）！快去群里或私聊逗她试试～` : '已喝下深海清水解药，恢复正常状态！');
+        await loadDashboard();
+      }
+    }
+
+    async function triggerMaxMissTest() {
+      await apiFetch('/api/drives/set', {
+        method: 'POST',
+        body: JSON.stringify({ miss: 92, tsundere: 75, playful: 70, grievance: 68, share: 85 }),
+      });
+      showToast('已将思念值(92%)与委屈度(68%)拉满！现在去QQ里跟她说句话，看她傲娇想念+告状爆发！');
+      await loadDashboard();
+    }
+
+    async function addCoreOrbWeb() {
+      const title = document.getElementById('newOrbTitle').value.trim();
+      const text = document.getElementById('newOrbText').value.trim();
+      if (!text) return;
+      await apiFetch('/api/orbs/add', {
+        method: 'POST',
+        body: JSON.stringify({ title: title || '与老大的深海高光时刻', text }),
+      });
+      document.getElementById('newOrbTitle').value = '';
+      document.getElementById('newOrbText').value = '';
+      showToast('🌟 已在杏仁核凝结一颗永不衰减的金色核心记忆水晶球！');
+      await loadDashboard();
+    }
+
+    async function saveWhaleMood() {
+      const mood = Number(document.getElementById('rngMood').value);
+      const energy = Number(document.getElementById('rngEnergy').value);
+      await apiFetch('/api/mood/set', { method: 'POST', body: JSON.stringify({ mood, energy }) });
+      showToast('鲸鱼心情与精力已同步！');
+      await loadDashboard();
+    }
+
+    let soloSending = false;
+    async function sendSoloChat() {
+      if (soloSending) return;
+      const inp = document.getElementById('soloChatInput');
+      const box = document.getElementById('soloChatBox');
+      const msg = inp.value.trim();
+      if (!msg) return;
+      soloSending = true;
+      inp.value = '';
+      box.insertAdjacentHTML('beforeend', `
+        <div style="align-self:flex-end;max-width:78%;background:linear-gradient(135deg,#0284c7,#2563eb);border-radius:12px 12px 3px 12px;padding:9px 13px;font-size:13px;line-height:1.5;color:#fff;">${msg.replace(/</g,'&lt;')}</div>
+      `);
+      box.scrollTop = box.scrollHeight;
+      box.insertAdjacentHTML('beforeend', `<div id="soloTyping" style="align-self:flex-start;color:#2dd4bf;font-size:12px;">鲸鱼正在深海打字中…</div>`);
+      box.scrollTop = box.scrollHeight;
+      try {
+        const r = await apiFetch('/api/chat/solo', { method: 'POST', body: JSON.stringify({ message: msg }) });
+        const typing = document.getElementById('soloTyping');
+        if (typing) typing.remove();
+        const reply = r?.reply || '唔…我刚刚走神了，老大再说一遍嘛～';
+        const gif = r?.gif || '12N11.gif';
+        box.insertAdjacentHTML('beforeend', `
+          <div style="align-self:flex-start;max-width:86%;display:flex;gap:8px;align-items:flex-start;">
+            <img src="${API_BASE}/media/${gif}?key=${encodeURIComponent(ACCESS_KEY)}" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:rgba(7,11,19,0.7);border:1px solid rgba(45,212,191,0.35);flex-shrink:0;" />
+            <div style="background:rgba(15,23,42,0.92);border:1px solid rgba(45,212,191,0.35);border-radius:12px 12px 12px 3px;padding:9px 13px;font-size:13px;line-height:1.55;color:#e2e8f0;">${reply.replace(/</g,'&lt;')}</div>
+          </div>
+        `);
+        box.scrollTop = box.scrollHeight;
+      } catch (e) {
+        const typing = document.getElementById('soloTyping');
+        if (typing) typing.remove();
+        showToast('对话失败：' + (e?.message || '网络异常'));
+      } finally {
+        soloSending = false;
+      }
+    }
+
+    async function remoteSendMsg() {
+      const type = document.getElementById('rcTargetType').value;
+      const targetId = document.getElementById('rcTargetId').value.trim();
+      const msg = document.getElementById('rcMessage').value.trim();
+      if (!targetId || !msg) return;
+      const action = type === 'group' ? 'send_group_msg' : 'send_private_msg';
+      const params = type === 'group'
+        ? { group_id: Number(targetId), message: [{ type: 'text', data: { text: msg } }] }
+        : { user_id: Number(targetId), message: [{ type: 'text', data: { text: msg } }] };
+      const r = await apiFetch('/api/onebot/send', { method: 'POST', body: JSON.stringify({ action, params }) });
+      if (r?.ok) {
+        document.getElementById('rcMessage').value = '';
+        showToast('已遥控鲸鱼发送消息！');
+      } else {
+        showToast('发送状态：' + (r?.error || '已投递'));
+      }
+    }
+
+    async function remotePokeOwner() {
+      const groupId = Number(document.getElementById('rcTargetId').value.trim() || TEST_GROUP_CFG);
+      await apiFetch('/api/onebot/send', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'group_poke', params: { group_id: groupId, user_id: Number(OWNER_QQ_CFG) } }),
+      });
+      showToast('已让鲸鱼伸尾巴在群里戳了老大一下！');
+    }
+
+    async function sendStickerToGroup(code, name) {
+      if (!confirm(`确定让鲸鱼把表情【${name}】发到测试群 TEST_GROUP_CFG 吗？`)) return;
+      const file = `file://./napcat/media-staging/whale-stickers/${code}.gif`;
+      await apiFetch('/api/onebot/send', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'send_group_msg',
+          params: { group_id: TEST_GROUP_CFG, message: [{ type: 'image', data: { file } }] },
+        }),
+      });
+      showToast(`已发送表情：${name}`);
+    }
+
+    async function adjustCookie(groupId, qq, delta, name) {
+      await apiFetch('/api/economy/cookie', { method: 'POST', body: JSON.stringify({ groupId, qq, delta, name }) });
+      showToast(`已调整 ${name} 的饼干 (${delta > 0 ? '+' + delta : delta})`);
+      await loadDashboard();
+    }
+
+    async function addReminderWeb() {
+      const minutes = Number(document.getElementById('remMinutes').value || 30);
+      const task = document.getElementById('remTask').value.trim();
+      if (!task) return;
+      await apiFetch('/api/reminder/manage', { method: 'POST', body: JSON.stringify({ action: 'add', minutes, task }) });
+      document.getElementById('remTask').value = '';
+      showToast('已添加深海定时提醒！');
+      await loadDashboard();
+    }
+
+    async function deleteReminderWeb(id) {
+      await apiFetch('/api/reminder/manage', { method: 'POST', body: JSON.stringify({ action: 'delete', id }) });
+      showToast('已删除提醒');
+      await loadDashboard();
+    }
+
+    async function savePersonaFiles(restart) {
+      const persona = document.getElementById('txtPersonaV2').value;
+      const style = document.getElementById('txtStyleV2').value;
+      showToast('正在保存并重启服务...');
+      await apiFetch('/api/persona/save', { method: 'POST', body: JSON.stringify({ persona, style, restart }) });
+      showToast('人设保存成功！');
+    }
+
+    async function restartDshWeb() {
+      if (!confirm('确认重启主机 dsh-web.service 吗？')) return;
+      showToast('正在重启 dsh-web...');
+      await apiFetch('/api/service/restart', { method: 'POST', body: '{}' });
+      setTimeout(loadDashboard, 4500);
+    }
+
+    async function captureSnowluma(act) {
+      showToast('正在抓取主机 :99 虚拟屏幕画面...');
+      const r = await apiFetch('/api/snowluma/screen', {
+        method: 'POST',
+        body: JSON.stringify({ action: act }),
+      });
+      if (r?.ok && r.img) {
+        const box = document.getElementById('snowlumaScreenBox');
+        const img = document.getElementById('snowlumaImg');
+        box.style.display = 'block';
+        img.src = `${API_BASE}/media/${r.img}&key=${encodeURIComponent(ACCESS_KEY)}`;
+        showToast('QQ 虚拟桌面画面已刷新！');
+      } else {
+        showToast('抓屏失败：' + (r?.error || '未知错误'));
+      }
+    }
+
+    /* ============================================================================
+     * 60FPS HIGH-PRECISION NEURAL RING CANVAS ENGINE (1:1 Replica of Screenshot)
+     * ============================================================================ */
+    const canvas = document.getElementById('neuralCanvas');
+    const ctx = canvas.getContext('2d');
+    let rotAngle = 0;
+    let simNodes = [];
+    let simLinks = [];
+    let hoveredNode = null;
+    let mouseX = -999;
+    let mouseY = -999;
+
+    function syncGraphPhysics(ring) {
+      if (!ring || !Array.isArray(ring.nodes)) return;
+      if (simNodes.length === ring.nodes.length) return;
+      const N = ring.nodes.length;
+      simNodes = ring.nodes.map((n, idx) => {
+        const sectorAngle = (n.sector / 12) * Math.PI * 2 + (Math.random() - 0.5) * 0.42;
+        const rad = 0.18 + Math.pow(Math.random(), 0.72) * 0.74;
+        return {
+          ...n,
+          rx: Math.cos(sectorAngle) * rad,
+          ry: Math.sin(sectorAngle) * rad,
+          vx: (Math.random() - 0.5) * 0.0006,
+          vy: (Math.random() - 0.5) * 0.0006,
+          size: n.owner?.includes('老大') ? 4.2 : 2.3 + (idx % 3) * 0.65,
+        };
+      });
+      simLinks = ring.links || [];
+    }
+
+    function triggerPulseWave(clusterId) {
+      if (!simLinks.length) return;
+      for (let i = 0; i < 18; i += 1) {
+        const l = simLinks[Math.floor(Math.random() * simLinks.length)];
+        if (!l) continue;
+        ACTIVE_PULSES.push({
+          source: l.source,
+          target: l.target,
+          t: 0,
+          speed: 0.018 + Math.random() * 0.025,
+          color: DASH_DATA?.ring?.clusters?.[clusterId]?.color || '#38bdf8',
+        });
+      }
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+    canvas.addEventListener('mouseleave', () => {
+      mouseX = -999;
+      mouseY = -999;
+      document.getElementById('nodeTooltip').style.display = 'none';
+    });
+    canvas.addEventListener('click', () => {
+      if (hoveredNode) openClusterDrawer(hoveredNode.cluster);
+    });
+
+    function drawCurvedText(text, cx, cy, radius, startAngle, charStep, color, fontSize = 10) {
+      ctx.save();
+      ctx.font = `600 ${fontSize}px "JetBrains Mono", monospace`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < text.length; i += 1) {
+        const ang = startAngle + i * charStep;
+        ctx.save();
+        ctx.translate(cx + Math.cos(ang) * radius, cy + Math.sin(ang) * radius);
+        ctx.rotate(ang + Math.PI / 2);
+        ctx.fillText(text[i], 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function renderLoop() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      if (canvas.width !== Math.floor(rect.width * dpr) || canvas.height !== Math.floor(rect.height * dpr)) {
+        canvas.width = Math.floor(rect.width * dpr);
+        canvas.height = Math.floor(rect.height * dpr);
+      }
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      const W = rect.width;
+      const H = rect.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const cx = W * 0.5;
+      const cy = H * 0.5;
+      const R = Math.min(W, H) * 0.43;
+      const innerR = R * 0.76;
+
+      if (RING_MODE === 'orbit') rotAngle += 0.0018;
+
+      // 1. Subtle radial glow
+      const bgGrad = ctx.createRadialGradient(cx, cy, innerR * 0.05, cx, cy, R * 1.12);
+      bgGrad.addColorStop(0, 'rgba(56, 189, 248, 0.09)');
+      bgGrad.addColorStop(0.65, 'rgba(15, 23, 42, 0.18)');
+      bgGrad.addColorStop(1, 'rgba(5, 7, 11, 0)');
+      ctx.fillStyle = bgGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 1.12, 0, Math.PI * 2);
+      ctx.fill();
+
+      const clusters = DASH_DATA?.ring?.clusters ? Object.values(DASH_DATA.ring.clusters) : [];
+      syncGraphPhysics(DASH_DATA?.ring);
+
+      // 2. Outer 12-Sector Segmented Ring + Tick Marks
+      const sectorCount = 12;
+      const gapAng = 0.035;
+      const sectorSpan = (Math.PI * 2) / sectorCount;
+
+      clusters.forEach((c, idx) => {
+        const a0 = idx * sectorSpan - Math.PI / 2 + gapAng + rotAngle * 0.25;
+        const a1 = (idx + 1) * sectorSpan - Math.PI / 2 - gapAng + rotAngle * 0.25;
+        const isSel = SELECTED_CLUSTER === c.id;
+
+        // Outer colored arc band
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, a0, a1);
+        ctx.strokeStyle = c.color;
+        ctx.lineWidth = isSel ? 8 : 5;
+        ctx.globalAlpha = isSel ? 1 : 0.82;
+        ctx.shadowColor = c.color;
+        ctx.shadowBlur = isSel ? 18 : 8;
+        ctx.stroke();
+        ctx.restore();
+
+        // Secondary dark track
+        ctx.beginPath();
+        ctx.arc(cx, cy, R * 0.91, a0, a1);
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+        ctx.lineWidth = 14;
+        ctx.stroke();
+
+        // Golden/Cyan equalizer tick bars ring (exact match to screenshot)
+        const ticks = 18;
+        for (let t = 0; t < ticks; t += 1) {
+          const ta = a0 + ((a1 - a0) * (t + 0.5)) / ticks;
+          const activeTick = t / ticks <= Math.min(1, (c.items.length + 2) / 18);
+          const rIn = R * 0.835;
+          const rOut = R * 0.872;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(ta) * rIn, cy + Math.sin(ta) * rIn);
+          ctx.lineTo(cx + Math.cos(ta) * rOut, cy + Math.sin(ta) * rOut);
+          ctx.strokeStyle = activeTick ? '#eab308' : 'rgba(100, 116, 139, 0.28)';
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+        }
+
+        // Curved Sector Title along outer ring
+        const midA = (a0 + a1) * 0.5;
+        const labelStr = `${c.name} ${c.cn.split('·')[0].trim()}`;
+        drawCurvedText(labelStr, cx, cy, R * 0.945, a0 + 0.05, 0.028, c.color, 9.5);
+      });
+
+      // 3. Inner Recall Stream Ring border + curved recall text
+      ctx.beginPath();
+      ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.32)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      const latestPulses = DASH_DATA?.ring?.pulses || [];
+      if (latestPulses.length > 0) {
+        const ringBanner = latestPulses.slice(0, 3).map((p) => `${p.cluster} 召回 「${p.snippet.slice(0, 18)}」 ← ${p.name}`).join('   |   ');
+        drawCurvedText(ringBanner.slice(0, 95), cx, cy, innerR * 1.045, -Math.PI * 0.85 - rotAngle * 0.4, 0.031, 'rgba(226, 232, 240, 0.78)', 9);
+      }
+
+      // 4. Inner Force-Directed Constellation (Synaptic Links + Glowing Particles)
+      const cosA = Math.cos(rotAngle);
+      const sinA = Math.sin(rotAngle);
+      const proj = simNodes.map((n) => {
+        n.rx += n.vx;
+        n.ry += n.vy;
+        const dist = Math.hypot(n.rx, n.ry);
+        if (dist > 0.92) {
+          n.vx *= -0.9;
+          n.vy *= -0.9;
+        }
+        const px = (n.rx * cosA - n.ry * sinA) * (innerR * 0.92) + cx;
+        const py = (n.rx * sinA + n.ry * cosA) * (innerR * 0.92) + cy;
+        return { ...n, px, py };
+      });
+
+      // Draw synaptic links
+      ctx.lineWidth = 0.65;
+      for (const l of simLinks) {
+        const a = proj[l.source];
+        const b = proj[l.target];
+        if (!a || !b) continue;
+        if (SELECTED_CLUSTER && a.cluster !== SELECTED_CLUSTER && b.cluster !== SELECTED_CLUSTER) continue;
+        ctx.strokeStyle = a.color;
+        ctx.globalAlpha = SELECTED_CLUSTER ? 0.28 : 0.14;
+        ctx.beginPath();
+        ctx.moveTo(a.px, a.py);
+        ctx.lineTo(b.px, b.py);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Draw active traveling pulses along links
+      for (let i = ACTIVE_PULSES.length - 1; i >= 0; i -= 1) {
+        const p = ACTIVE_PULSES[i];
+        p.t += p.speed;
+        if (p.t >= 1) {
+          ACTIVE_PULSES.splice(i, 1);
+          continue;
+        }
+        const a = proj[p.source];
+        const b = proj[p.target];
+        if (!a || !b) continue;
+        const x = a.px + (b.px - a.px) * p.t;
+        const y = a.py + (b.py - a.py) * p.t;
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(x, y, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      if (Math.random() < 0.08 && simLinks.length > 0) {
+        const rl = simLinks[Math.floor(Math.random() * simLinks.length)];
+        ACTIVE_PULSES.push({ source: rl.source, target: rl.target, t: 0, speed: 0.016, color: '#38bdf8' });
+      }
+
+      // Draw nodes & check hover
+      hoveredNode = null;
+      for (const n of proj) {
+        const matchSearch = !SEARCH_FILTER || n.label.toLowerCase().includes(SEARCH_FILTER) || n.cluster.toLowerCase().includes(SEARCH_FILTER);
+        const matchCluster = !SELECTED_CLUSTER || n.cluster === SELECTED_CLUSTER;
+        const alpha = (matchSearch && matchCluster) ? 0.95 : 0.12;
+
+        const dMouse = Math.hypot(mouseX - n.px, mouseY - n.py);
+        if (dMouse < 10 && matchSearch) hoveredNode = n;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = n.color;
+        if (n.owner?.includes('老大') || hoveredNode === n) {
+          ctx.shadowColor = n.color;
+          ctx.shadowBlur = 14;
+        }
+        ctx.beginPath();
+        ctx.arc(n.px, n.py, hoveredNode === n ? n.size * 1.9 : n.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Central core star
+      ctx.save();
+      ctx.fillStyle = '#f8fafc';
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 22;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      const tip = document.getElementById('nodeTooltip');
+      if (hoveredNode) {
+        tip.style.display = 'block';
+        tip.style.left = Math.min(W - 330, mouseX + 14) + 'px';
+        tip.style.top = Math.max(12, mouseY - 18) + 'px';
+        tip.innerHTML = `
+          <div style="color:${hoveredNode.color};font-weight:700;margin-bottom:3px;">[${hoveredNode.cluster}] ${hoveredNode.owner} · ${hoveredNode.scope}</div>
+          <div>${hoveredNode.fullText}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:4px;">点击展开该神经团编辑</div>
+        `;
+      } else {
+        tip.style.display = 'none';
+      }
+
+      ctx.restore();
+      requestAnimationFrame(renderLoop);
+    }
+
+    /* ============================================================================
+     * 3D CONE CONSTELLATION ENGINE (peterpoal134/memory-brain Replica + Whale Widget)
+     * ============================================================================ */
+    const b3dCanvas = document.getElementById('brain3dCanvas');
+    const b3dCtx = b3dCanvas.getContext('2d');
+    let b3dNodes = [];
+    let b3dEdges = [];
+    let b3dYaw = 0.35, b3dPitch = -0.22, b3dZoom = 1.45, b3dPanX = 0, b3dPanY = 0;
+    let b3dDrag = false, b3dLx = 0, b3dLy = 0, b3dHover = null;
+    const B3D_COL = { core: '#eafcff', person: '#00e5ff', place: '#39ff8f', thing: '#ffb020', topic: '#b967ff', skill: '#ff3d81' };
+    const B3D_KIND = { episode: '#4fd6ff', fact: '#ffd166', reflection: '#ffb347', preference: '#9dff8f', skill: '#ff7fd0', relation: '#b18cff' };
+    const B3D_SPR = {};
+
+    function getB3dSprite(color) {
+      if (B3D_SPR[color]) return B3D_SPR[color];
+      const s = document.createElement('canvas');
+      s.width = s.height = 64;
+      const c = s.getContext('2d');
+      const h = color.replace('#', '');
+      const r = parseInt(h.substring(0, 2), 16) || 56;
+      const g = parseInt(h.substring(2, 4), 16) || 189;
+      const b = parseInt(h.substring(4, 6), 16) || 248;
+      const gr = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, 'rgba(255,255,255,0.96)');
+      gr.addColorStop(0.25, `rgba(${r},${g},${b},0.82)`);
+      gr.addColorStop(0.6, `rgba(${r},${g},${b},0.18)`);
+      gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      c.fillStyle = gr;
+      c.fillRect(0, 0, 64, 64);
+      B3D_SPR[color] = s;
+      return s;
+    }
+
+    function b3dBasis(d) {
+      const up = Math.abs(d[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
+      let u = [d[1]*up[2]-d[2]*up[1], d[2]*up[0]-d[0]*up[2], d[0]*up[1]-d[1]*up[0]];
+      const L = Math.hypot(...u) || 1;
+      u = u.map((x) => x / L);
+      const v = [d[1]*u[2]-d[2]*u[1], d[2]*u[0]-d[0]*u[2], d[0]*u[1]-d[1]*u[0]];
+      return [u, v];
+    }
+
+    function layoutBrain3D() {
+      const CL = ['person', 'topic', 'thing', 'place', 'skill'];
+      const DIRS = [[0, 1, 0], [1, 0, 0], [-0.5, 0, 0.866], [0, -1, 0], [-0.5, 0, -0.866]];
+      const byType = { person: [], topic: [], thing: [], place: [], skill: [] };
+      b3dNodes.forEach((n) => {
+        if (n.type === 'core') { n.x = 0; n.y = 0; n.z = 0; n.r = 9; return; }
+        if (n.type !== 'memory') (byType[n.type] || byType.thing).push(n);
+      });
+      CL.forEach((t, ci) => {
+        const list = byType[t] || [];
+        const d = DIRS[ci];
+        const [u, v] = b3dBasis(d);
+        const cone = Math.min(0.68, 0.4 + 0.05 * Math.sqrt(list.length || 1));
+        const cosMax = Math.cos(cone);
+        list.forEach((n, k) => {
+          const ct = 1 - ((k + 0.5) / Math.max(1, list.length)) * (1 - cosMax);
+          const st = Math.sqrt(Math.max(0, 1 - ct * ct));
+          const phi = k * 2.4;
+          const R = 210 + (k % 5) * 8;
+          n.x = (d[0]*ct + (u[0]*Math.cos(phi) + v[0]*Math.sin(phi))*st) * R;
+          n.y = (d[1]*ct + (u[1]*Math.cos(phi) + v[1]*Math.sin(phi))*st) * R;
+          n.z = (d[2]*ct + (u[2]*Math.cos(phi) + v[2]*Math.sin(phi))*st) * R;
+          n.r = 3 + Math.min(6, Math.sqrt(n.degree || 1) * 1.3);
+        });
+      });
+      const map = {};
+      b3dNodes.forEach((n) => { map[n.id] = n; });
+      const memList = b3dNodes.filter((n) => n.type === 'memory');
+      memList.forEach((n, k) => {
+        let cx = 0, cy = 0, cz = 0, c = 0;
+        (n.entities || []).forEach((id) => {
+          const e = map[id];
+          if (e) { cx += e.x; cy += e.y; cz += e.z; c += 1; }
+        });
+        if (c > 0) {
+          cx /= c; cy /= c; cz /= c;
+          const L = Math.hypot(cx, cy, cz) || 1;
+          const R = 128 + (k % 7) * 6;
+          n.x = (cx / L) * R; n.y = (cy / L) * R; n.z = (cz / L) * R;
+        } else {
+          const ga = Math.PI * (3 - Math.sqrt(5));
+          const y = 1 - (k / Math.max(1, memList.length - 1)) * 2;
+          const r = Math.sqrt(Math.max(0, 1 - y * y));
+          const th = k * ga;
+          n.x = Math.cos(th) * r * 135; n.y = y * 135; n.z = Math.sin(th) * r * 135;
+        }
+        n.r = 2.0 + (n.importance || 0.5) * 3.0;
+      });
+    }
+
+    function projectB3D(p, W, H) {
+      const cy = Math.cos(b3dYaw), sy = Math.sin(b3dYaw);
+      const cp = Math.cos(b3dPitch), sp = Math.sin(b3dPitch);
+      const x = p.x * cy - p.z * sy;
+      let z = p.x * sy + p.z * cy;
+      const y = p.y * cp - z * sp;
+      z = p.y * sp + z * cp;
+      const f = 620;
+      const s = f / (f + z + 420);
+      return { x: W * 0.5 + b3dPanX + x * s * b3dZoom, y: H * 0.52 + b3dPanY + y * s * b3dZoom, s: s * b3dZoom, z };
+    }
+
+    async function loadBrain3D() {
+      const avatarEl = document.getElementById('whaleFloatingAvatar');
+      if (avatarEl && !avatarEl.src.includes('.gif')) {
+        avatarEl.src = `${API_BASE}/media/12N11.gif?key=${encodeURIComponent(ACCESS_KEY)}`;
+      }
+      const g = await apiFetch('/api/brain/graph');
+      const data = g?.data || g || {};
+      const rawNodes = Array.isArray(data.nodes) ? data.nodes : [];
+      const rawEdges = Array.isArray(data.edges) ? data.edges : [];
+      const coreNode = { id: 'core', name: '🐋 鲸鱼识海核心', type: 'core', x: 0, y: 0, z: 0, r: 9 };
+      b3dNodes = [coreNode, ...rawNodes];
+      b3dEdges = [...rawEdges];
+      rawNodes.forEach((n) => {
+        if (n.type !== 'memory') b3dEdges.push({ src: 'core', dst: n.id, kind: 'core' });
+      });
+      layoutBrain3D();
+      document.getElementById('b3dStats').innerText = `记忆原子 ${rawNodes.filter(n=>n.type==='memory').length} · 实体 ${rawNodes.filter(n=>n.type!=='memory').length} · 突触连线 ${b3dEdges.length}`;
+
+      const h = await apiFetch('/api/brain/health');
+      if (h?.report) document.getElementById('b3dReport').innerText = h.report;
+      const lf = await apiFetch('/api/brain/life/state');
+      const lState = lf?.data || lf || {};
+      document.getElementById('b3dLifeBox').innerHTML = `
+        <div>当前活动：<b style="color:#38bdf8;">${lState.last_action || '深海值班发呆中'}</b></div>
+        <div>最近想法：${lState.last_thought || '一边晃着尾巴尖一边守着老大的饼干罐'}</div>
+      `;
+    }
+
+    async function runBrainAction(path, method, title) {
+      showToast(`正在执行：${title}...`);
+      const r = await apiFetch(path, { method, body: method === 'POST' ? '{}' : undefined });
+      document.getElementById('b3dReport').innerText = r?.report || JSON.stringify(r?.data || r, null, 2);
+      showToast(`${title} 完成！`);
+      if (method === 'POST') loadBrain3D();
+    }
+
+    async function runLifeStep(forceAct) {
+      showToast(`正在让鲸鱼执行生活动作：${forceAct}...`);
+      const r = await apiFetch('/api/brain/life/step', { method: 'POST', body: JSON.stringify({ force: forceAct }) });
+      document.getElementById('b3dReport').innerText = JSON.stringify(r?.data || r, null, 2);
+      loadBrain3D();
+    }
+
+    async function testBrainRecall() {
+      const q = document.getElementById('b3dQuery').value.trim();
+      if (!q) return;
+      const r = await apiFetch('/api/brain/recall', {
+        method: 'POST',
+        body: JSON.stringify({ query: q, k: 4, visibility: ['public', 'private', 'group'] }),
+      });
+      const hits = r?.data?.hits || [];
+      document.getElementById('b3dRecallOut').innerHTML = hits.length
+        ? hits.map((h, i) => `<div style="margin-bottom:5px;padding:5px;background:rgba(15,23,42,0.8);border-radius:4px;"><b>#${i+1} [${h.kind}] (${(h.score||0).toFixed(2)})</b><br/>${h.text}</div>`).join('')
+        : '<div style="color:#64748b;">未命中相关记忆</div>';
+    }
+
+    b3dCanvas.addEventListener('mousedown', (e) => { b3dDrag = true; b3dLx = e.clientX; b3dLy = e.clientY; });
+    window.addEventListener('mouseup', () => { b3dDrag = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (b3dDrag) {
+        b3dYaw += (e.clientX - b3dLx) * 0.0055;
+        b3dPitch = Math.max(-1.35, Math.min(1.35, b3dPitch + (e.clientY - b3dLy) * 0.0055));
+        b3dLx = e.clientX; b3dLy = e.clientY;
+      }
+      const rect = b3dCanvas.getBoundingClientRect();
+      if (rect.width > 0) {
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        let best = null, bd = 180;
+        b3dNodes.forEach((n) => {
+          const p = projectB3D(n, rect.width, rect.height);
+          const d = (p.x - mx) ** 2 + (p.y - my) ** 2;
+          if (d < bd) { bd = d; best = { n, p }; }
+        });
+        b3dHover = best;
+        const tip = document.getElementById('b3dTip');
+        if (best) {
+          tip.style.display = 'block';
+          tip.style.left = Math.min(rect.width - 330, best.p.x + 12) + 'px';
+          tip.style.top = Math.max(10, best.p.y - 16) + 'px';
+          const rawTxt = String(best.n.text || best.n.name || '');
+          const imgMatch = rawTxt.match(/\[img:([a-zA-Z0-9._-]+)\]/);
+          const cleanTxt = rawTxt.replace(/\[img:[^\]]+\]/g, '').trim();
+          const imgHtml = imgMatch
+            ? `<div style="margin-top:6px;"><img src="${API_BASE}/media/${imgMatch[1]}?key=${encodeURIComponent(ACCESS_KEY)}" style="max-width:210px;max-height:150px;border-radius:6px;border:1px solid rgba(56,189,248,0.45);display:block;" /></div>`
+            : '';
+          tip.innerHTML = `<b style="color:#38bdf8;">[${best.n.kind || best.n.type}]</b> ${cleanTxt}${imgHtml}`;
+        } else {
+          tip.style.display = 'none';
+        }
+      }
+    });
+    b3dCanvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      b3dZoom = Math.max(0.55, Math.min(3.5, b3dZoom * (e.deltaY < 0 ? 1.1 : 0.9)));
+    }, { passive: false });
+
+    function renderB3dLoop() {
+      const rect = b3dCanvas.parentElement?.getBoundingClientRect();
+      if (rect && rect.width > 0 && rect.height > 0) {
+        const dpr = window.devicePixelRatio || 1;
+        if (b3dCanvas.width !== Math.floor(rect.width * dpr) || b3dCanvas.height !== Math.floor(rect.height * dpr)) {
+          b3dCanvas.width = Math.floor(rect.width * dpr);
+          b3dCanvas.height = Math.floor(rect.height * dpr);
+        }
+        b3dCtx.save();
+        b3dCtx.scale(dpr, dpr);
+        const W = rect.width, H = rect.height;
+        b3dCtx.clearRect(0, 0, W, H);
+        if (!b3dDrag && !b3dHover) b3dYaw += 0.0018;
+
+        const pts = {};
+        b3dNodes.forEach((n) => { pts[n.id] = projectB3D(n, W, H); });
+        b3dEdges.forEach((e) => {
+          const a = pts[e.src], b = pts[e.dst];
+          if (!a || !b) return;
+          const alpha = e.kind === 'core' ? 0.14 : (e.kind === 'relation' ? 0.25 : 0.11);
+          b3dCtx.strokeStyle = `rgba(185, 240, 255, ${alpha})`;
+          b3dCtx.lineWidth = e.kind === 'relation' ? 0.85 : 0.45;
+          b3dCtx.beginPath();
+          b3dCtx.moveTo(a.x, a.y);
+          b3dCtx.lineTo(b.x, b.y);
+          b3dCtx.stroke();
+        });
+
+        b3dCtx.globalCompositeOperation = 'lighter';
+        const sorted = b3dNodes.slice().sort((a, b) => pts[a.id].z - pts[b.id].z);
+        sorted.forEach((n) => {
+          const p = pts[n.id];
+          const col = n.type === 'memory' ? (B3D_KIND[n.kind] || '#ffd166') : (B3D_COL[n.type] || '#00e5ff');
+          const r = Math.max(2, (n.r || 3) * p.s);
+          const sz = r * (n.type === 'core' ? 5.5 : 3.6);
+          b3dCtx.drawImage(getB3dSprite(col), p.x - sz * 0.5, p.y - sz * 0.5, sz, sz);
+        });
+        b3dCtx.globalCompositeOperation = 'source-over';
+        b3dCtx.restore();
+      }
+      requestAnimationFrame(renderB3dLoop);
+    }
+    requestAnimationFrame(renderB3dLoop);
+
+    loadDashboard();
+    setInterval(loadDashboard, 6000);
+    requestAnimationFrame(renderLoop);
+  </script>
+</body>
+</html>
